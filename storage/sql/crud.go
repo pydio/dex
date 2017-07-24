@@ -218,9 +218,10 @@ func (c *conn) CreateAuthCode(a storage.AuthCode) error {
 
 	if err != nil {
 		if c.alreadyExistsCheck(err) {
-			return storage.ErrAlreadyExists
+			//return storage.ErrAlreadyExists
+			return fmt.Errorf("insert auth code: %v : %v", err , a.ID )
 		}
-		return fmt.Errorf("insert auth code: %v", err)
+		return fmt.Errorf("insert auth code: %v : %v", err , a.ID )
 	}
 	return nil
 }
@@ -549,6 +550,8 @@ func scanClient(s scanner) (cli storage.Client, err error) {
 	return cli, nil
 }
 
+
+
 func (c *conn) CreatePassword(p storage.Password) error {
 	p.Email = strings.ToLower(p.Email)
 	_, err := c.Exec(`
@@ -644,6 +647,107 @@ func scanPassword(s scanner) (p storage.Password, err error) {
 	}
 	return p, nil
 }
+
+/*
+func (c *conn) CreatePydioUser(p storage.PydioUser) error {
+	p.Login = strings.ToLower(p.Login)
+	_, err := c.Exec(`
+		insert into password (
+			login, password
+		)
+		values (
+			$1, $2
+		);
+	`,
+		p.Login, p.Password,
+	)
+	if err != nil {
+		if c.alreadyExistsCheck(err) {
+			return storage.ErrAlreadyExists
+		}
+		return fmt.Errorf("insert pydiouser: %v", err)
+	}
+
+	return nil
+}
+
+// change password function
+func (c *conn) UpdatePydioUser(login string, updater func (p storage.PydioUser) (storage.PydioUser, error)) error{
+	return c.ExecTx(func(tx *trans) error {
+		p, err := getPydioUser(tx, login)
+		if err != nil {
+			return err
+		}
+
+		np, err := updater(p)
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(`
+			update ajxp_users
+			set
+				password = $1
+			where login = 2;
+		`,
+			np.Password, np.Login,
+		)
+		if err != nil {
+			return fmt.Errorf("update password for pydio user: %v", err)
+		}
+		return nil
+	})
+}
+
+func (c *conn) GetPydioUser(login string) (storage.PydioUser, error) {
+	return getPydioUser(c, login)
+}
+
+func (c *conn) ListPydioUser() ([]storage.PydioUser, error) {
+	rows, err := c.Query(`
+		select
+			login, password
+		from ajxp_user;
+	`)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []storage.PydioUser
+	for rows.Next() {
+		p, err := scanPydioUser(rows)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
+func getPydioUser(q querier, login string) (p storage.PydioUser, err error){
+	return scanPydioUser(q.QueryRow(`
+		select
+			login, password
+		from ajxp_users where login = $1;
+	`, login))
+}
+
+func scanPydioUser(s scanner) (p storage.PydioUser, err error){
+	err = s.Scan(
+		&p.Login, &p.Password,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return p, storage.ErrNotFound
+		}
+		return p, fmt.Errorf("select user: %v", err)
+	}
+	return p, nil
+}
+
+*/
 
 func (c *conn) CreateOfflineSessions(s storage.OfflineSessions) error {
 	_, err := c.Exec(`
@@ -821,6 +925,9 @@ func (c *conn) DeleteClient(id string) error      { return c.delete("client", "i
 func (c *conn) DeleteRefresh(id string) error     { return c.delete("refresh_token", "id", id) }
 func (c *conn) DeletePassword(email string) error {
 	return c.delete("password", "email", strings.ToLower(email))
+}
+func (c *conn) DeletePydioUser(login string) error {
+	return c.delete("ajxp_users", "login", strings.ToLower(login))
 }
 func (c *conn) DeleteConnector(id string) error { return c.delete("connector", "id", id) }
 

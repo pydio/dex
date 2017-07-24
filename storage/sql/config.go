@@ -10,11 +10,19 @@ import (
 	"github.com/coreos/dex/storage"
 	"github.com/lib/pq"
 	sqlite3 "github.com/mattn/go-sqlite3"
+	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/go-sql-driver/mysql"
+	"strings"
 )
 
 const (
 	// postgres error codes
 	pgErrUniqueViolation = "23505" // unique_violation
+
+	// mysql error codes
+
+	mysqlErrorUniqueViolation = uint16(1062) // Duplicate entry for key 'PRIMARY'
 )
 
 // SQLite3 options for creating an SQL db.
@@ -142,6 +150,100 @@ func (p *Postgres) open(logger logrus.FieldLogger) (*conn, error) {
 	c := &conn{db, flavorPostgres, logger, errCheck}
 	if _, err := c.migrate(); err != nil {
 		return nil, fmt.Errorf("failed to perform migrations: %v", err)
+	}
+	return c, nil
+}
+
+// MySQL options for creation an MySQL DB
+type MySQL struct {
+	Database 	string
+	User		string
+	Password	string
+	Host		string
+	Port		string
+	Protocol	string
+
+	//ConnectionTimeout int // Seconds
+}
+
+func (s *MySQL) Open(logger logrus.FieldLogger) (storage.Storage, error){
+	conn, err := s.open(logger)
+	if (err != nil ){
+		return nil, err
+	}
+	return conn, nil
+}
+
+func (s *MySQL) open(logger logrus.FieldLogger) (*conn, error) {
+	// dns: [username[:password]@][protocol[(address)]]/dbname
+	//var config := &mysql.Config{s.User,s.Password,"tcp",s.Host,s.Database	}
+
+	v := url.Values{}
+	set := func(key, val string) {
+		if val != "" {
+			v.Set(key, val)
+		}
+	}
+	//set("connect_timeout", strconv.Itoa(s.ConnectionTimeout))
+	set("parseTime", "true")
+	set("multiStatements", "true")
+	set("collation", "utf8_general_ci")
+	set("charset", "utf8")
+	set("autocommit", "false")
+
+	// Set isolation transaction
+	//set("tx_isolation", "SERIALIZABLE")
+	//set("connect_timeout", strconv.Itoa(100))
+
+	if s.Port == ""{
+		s.Port = ":3306"
+	}
+
+	if s.Protocol == "" {
+		s.Protocol = "tcp"
+	}
+
+	u := url.URL{
+		Scheme:   s.Protocol,
+		Host:     s.Protocol + "(" + s.Host + s.Port + ")",
+		Path:     "/" + s.Database,
+		RawQuery: v.Encode(),
+	}
+
+	if s.User != "" {
+		if s.Password != "" {
+			u.User = url.UserPassword(s.User, s.Password)
+		} else {
+			u.User = url.User(s.User)
+		}
+	}
+	//dnstest := s.User + ":" + s.Password + "@tcp(" + s.Host + ":3306)/" + s.Database + "?parseTime=true&multiStatements=true&collation=utf8_general_ci&charset=utf8&autocommit=true&tx_isolation=SERIALIZABLE"
+
+	replaceStr := s.Protocol + "://"
+	dns := strings.TrimPrefix(u.String(), replaceStr)
+
+	db, err := sql.Open("mysql", dns)
+	if err != nil {
+		return nil, err
+	}
+	errCheck := func(err error) bool {
+		sqlErr, ok := err.(*mysql.MySQLError)
+		if !ok {
+			fmt.Printf("MySQL Error: %s Code: %s", sqlErr.Message, sqlErr.Number)
+			return false
+		}
+		if( sqlErr.Number == 1213) {
+			return false
+		}
+		if (sqlErr.Number == 40001){
+			return false
+		}
+		return sqlErr.Number == mysqlErrorUniqueViolation
+	}
+
+	c := &conn{db, flavorMySQL, logger, errCheck}
+	if _, err := c.migrate(); err != nil {
+		return nil, fmt.Errorf("failed to open migrations: %v", err)
 	}
 	return c, nil
 }

@@ -592,6 +592,9 @@ func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
 		clientSecret = r.PostFormValue("client_secret")
 	}
 
+	s.logger.Info("Client ID: %v", clientID)
+	s.logger.Info("Client clientSecret: %v", clientSecret)
+
 	client, err := s.storage.GetClient(clientID)
 	if err != nil {
 		if err != storage.ErrNotFound {
@@ -608,11 +611,16 @@ func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	grantType := r.PostFormValue("grant_type")
+
+	s.logger.Info("Grant Type %v", grantType)
+
 	switch grantType {
 	case grantTypeAuthorizationCode:
 		s.handleAuthCode(w, r, client)
 	case grantTypeRefreshToken:
 		s.handleRefreshToken(w, r, client)
+	case grantTypePassword:
+		s.handleCredentialGrant(w, r, client)
 	default:
 		s.tokenErrHelper(w, errInvalidGrant, "", http.StatusBadRequest)
 	}
@@ -753,7 +761,7 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
 			}
 		} else {
 			if oldTokenRef, ok := session.Refresh[tokenRef.ClientID]; ok {
-				// Delete old refresh token from storage.
+				// Delete oeyJhbGciOiJSUzI1NiIsImtpZCI6IjZhMGFkYzM1MGVkYzQ0YWE3YWJkNjZkNmNiYzIxN2Y5MTNlYmE2Y2MifQ.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjU1NTYvZGV4Iiwic3ViIjoiQ2dkMWMyVnlYMmxrRWdSc1pHRnciLCJhdWQiOiJleGFtcGxlLWFwcCIsImV4cCI6MTUwMDczNzYzMiwiaWF0IjoxNTAwNjUxMjMyLCJhdF9oYXNoIjoiYWREVDIzWFJad19kU2x2WDJFdDlDdyJ9.V7LZIc1UU01BRh8pP6HntBEs1svImgcqMVuoMVxxJJQnAXmUd6aa5i6v7JKRqZQ5SvK8O6sw2YkbSRA-fC2QrKs9dVXJ2uknD3_UunFs_n2QBRu21xHUyd96qW9--oo79jL01P9TfvFz91igfwgfGF-vv1s7mEd7G75LoXNAWfFfO2t4suv_bFL7-d-W_FwBI7L9gosW-D7_7adwQdbofYCRSoeBBmPwMquGXL0AoH_w9ahSmVhQ3NAAweWQqbtk9lei5QVkYvsCi43E8OapQfBCP_F1GpGOOFALPUXo6EsaA9XAvZPX85fbHSlWiZWerYdhyd9ClRf75_ed-nzMhwld refresh token from storage.
 				if err := s.storage.DeleteRefresh(oldTokenRef.ID); err != nil {
 					s.logger.Errorf("failed to delete refresh token: %v", err)
 					s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
@@ -778,6 +786,199 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
 	s.writeAccessToken(w, idToken, accessToken, refreshToken, expiry)
 }
 
+// ==================================
+func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, client storage.Client){
+	username := r.PostFormValue("username")
+	password := r.PostFormValue("password")
+	scopes := strings.Split(r.PostFormValue("scope"), " ")
+	nonce := r.PostFormValue("nonce")
+
+	s.logger.Info("Enter handleCredentialGrant func")
+
+	if username == "" || password == "" {
+		// Respose with error message
+		s.logger.Info("Error : Invalid request")
+		s.tokenErrHelper(w, errInvalidRequest, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	// Try to login with username/password
+
+	//p, err := s.storage.GetPassword(username)
+
+	ldap, err := s.getConnector("ldap")
+
+	passwordConnector, ok := ldap.Connector.(connector.PasswordConnector)
+	if !ok {
+		s.renderError(w, http.StatusBadRequest, "Requested resource does not exist.")
+		return
+	}
+
+	scope2 := connector.Scopes{OfflineAccess: true, Groups: false}
+
+	identity, ok, err := passwordConnector.Login(r.Context(), scope2, username, password)
+
+	if err != nil {
+		s.logger.Info("Failed to login user: ", err)
+		//s.renderError(w, http.StatusInternalServerError, "Login error.")
+		return
+	}
+	if !ok {
+		s.logger.Errorf("Server template error: %v", err)
+		return
+	}
+
+
+	// if okay, return Access Token, TokenID and refreshToken
+	s.logger.Info("IdToken for: ", identity.UserID)
+	s.logger.Info("IdToken email: ", identity.Email)
+
+	claims := storage.Claims{ identity.UserID, identity.Username, identity.Email, identity.EmailVerified, nil}
+
+
+	accessToken := storage.NewID()
+
+	authCode := storage.AuthCode{
+		ID:          "",
+		ClientID:    client.ID,
+		Claims: claims,
+		Nonce:       nonce,
+		ConnectorID: "ldap",
+	}
+
+	idToken, expiry, err := s.newIDToken(client.ID, claims, scopes, authCode.Nonce, accessToken, authCode.ConnectorID)
+	if err != nil {
+		s.logger.Errorf("failed to create ID token: %v", err)
+		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+		return
+	}
+
+	reqRefresh := func() bool {
+		// Ensure the connector supports refresh tokens.
+		//
+		// Connectors like `saml` do not implement RefreshConnector.
+		conn, err := s.getConnector(authCode.ConnectorID)
+		if err != nil {
+			s.logger.Errorf("connector with ID %q not found: %v", authCode.ConnectorID, err)
+			s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+			return false
+		}
+
+		_, ok := conn.Connector.(connector.RefreshConnector)
+		if !ok {
+			return false
+		}
+
+		for _, scope := range authCode.Scopes {
+			if scope == scopeOfflineAccess {
+				return true
+			}
+		}
+		return false
+	}()
+
+	var refreshToken string
+	if reqRefresh {
+		refresh := storage.RefreshToken{
+			ID:            storage.NewID(),
+			Token:         storage.NewID(),
+			ClientID:      authCode.ClientID,
+			ConnectorID:   authCode.ConnectorID,
+			Scopes:        authCode.Scopes,
+			Claims:        authCode.Claims,
+			Nonce:         authCode.Nonce,
+			ConnectorData: authCode.ConnectorData,
+			CreatedAt:     s.now(),
+			LastUsed:      s.now(),
+		}
+		token := &internal.RefreshToken{
+			RefreshId: refresh.ID,
+			Token:     refresh.Token,
+		}
+		if refreshToken, err = internal.Marshal(token); err != nil {
+			s.logger.Errorf("failed to marshal refresh token: %v", err)
+			s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+			return
+		}
+
+		if err := s.storage.CreateRefresh(refresh); err != nil {
+			s.logger.Errorf("failed to create refresh token: %v", err)
+			s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+			return
+		}
+
+		// deleteToken determines if we need to delete the newly created refresh token
+		// due to a failure in updating/creating the OfflineSession object for the
+		// corresponding user.
+		var deleteToken bool
+		defer func() {
+			if deleteToken {
+				// Delete newly created refresh token from storage.
+				if err := s.storage.DeleteRefresh(refresh.ID); err != nil {
+					s.logger.Errorf("failed to delete refresh token: %v", err)
+					s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+					return
+				}
+			}
+		}()
+
+		tokenRef := storage.RefreshTokenRef{
+			ID:        refresh.ID,
+			ClientID:  refresh.ClientID,
+			CreatedAt: refresh.CreatedAt,
+			LastUsed:  refresh.LastUsed,
+		}
+
+		// Try to retrieve an existing OfflineSession object for the corresponding user.
+		if session, err := s.storage.GetOfflineSessions(refresh.Claims.UserID, refresh.ConnectorID); err != nil {
+			if err != storage.ErrNotFound {
+				s.logger.Errorf("failed to get offline session: %v", err)
+				s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+				deleteToken = true
+				return
+			}
+			offlineSessions := storage.OfflineSessions{
+				UserID:  refresh.Claims.UserID,
+				ConnID:  refresh.ConnectorID,
+				Refresh: make(map[string]*storage.RefreshTokenRef),
+			}
+			offlineSessions.Refresh[tokenRef.ClientID] = &tokenRef
+
+			// Create a new OfflineSession object for the user and add a reference object for
+			// the newly received refreshtoken.
+			if err := s.storage.CreateOfflineSessions(offlineSessions); err != nil {
+				s.logger.Errorf("failed to create offline session: %v", err)
+				s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+				deleteToken = true
+				return
+			}
+		} else {
+			if oldTokenRef, ok := session.Refresh[tokenRef.ClientID]; ok {
+				// Delete old refresh token from storage.
+				if err := s.storage.DeleteRefresh(oldTokenRef.ID); err != nil {
+					s.logger.Errorf("failed to delete refresh token: %v", err)
+					s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+					deleteToken = true
+					return
+				}
+			}
+
+			// Update existing OfflineSession obj with new RefreshTokenRef.
+			if err := s.storage.UpdateOfflineSessions(session.UserID, session.ConnID, func(old storage.OfflineSessions) (storage.OfflineSessions, error) {
+				old.Refresh[tokenRef.ClientID] = &tokenRef
+				return old, nil
+			}); err != nil {
+				s.logger.Errorf("failed to update offline session: %v", err)
+				s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
+				deleteToken = true
+				return
+			}
+
+		}
+	}
+
+	s.writeAccessToken(w, idToken, accessToken, refreshToken, expiry)
+}
 // handle a refresh token request https://tools.ietf.org/html/rfc6749#section-6
 func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, client storage.Client) {
 	code := r.PostFormValue("refresh_token")

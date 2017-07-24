@@ -7,11 +7,21 @@ issuer: http://127.0.0.1:5556/dex
 # options include SQL flavors and Kubernetes third party resources.
 #
 # See the storage document at Documentation/storage.md for further information.
-storage:
-  type: sqlite3
-  config:
-    file: examples/dex.db
 
+#storage:
+#  type: sqlite3
+#  config:
+#    file: examples/2dex.db
+
+storage:
+  type: mysql
+  config:
+    Database: 	py8dev
+    User:		pydio
+    Password:	pydiopsss
+    Host:		127.0.0.1
+    #Port:		'3306'
+    Protocol:	tcp
 # Configuration for the HTTP endpoints.
 web:
   http: 0.0.0.0:5556
@@ -34,15 +44,15 @@ web:
 #   idTokens: "24h"
 
 # Options for controlling the logger.
-# logger:
-#   level: "debug"
-#   format: "text" # can also be "json"
+logger:
+  level: "debug"
+  format: "text" # can also be "json"
 
 # Uncomment this block to control which response types dex supports. For example
 # the following response types enable the implicit flow for web-only clients.
 # Defaults to ["code"], the code flow.
-# oauth2:
-#   responseTypes: ["code", "token", "id_token"]
+oauth2:
+  responseTypes: ["code", "token", "id_token"]
 
 # Instead of reading from an external storage, use this list of clients.
 #
@@ -58,6 +68,43 @@ connectors:
 - type: mockCallback
   id: mock
   name: Example
+
+#- type: Pydio
+#  id: pydio
+#  name: Pydio Authentication
+#  config:
+#    BootstrapFile: /home/tran/Documents/sites/py8dev/data/plugins/boot.conf/bootstrap.json
+
+- type: ldap
+  id: ldap
+  name: LDAP
+  config:
+    #host: ldap.example.com:636
+    host: 192.168.0.8:389
+     # The following field is required if using port 389.
+    insecureNoSSL: true
+    #rootCA: /etc/dex/ldap.ca
+    bindDN: #uid=seviceaccount,cn=users,dc=example,dc=com
+    bindPW: #password
+    userSearch:
+      # Would translate to the query "(&(objectClass=person)(uid=<username>))"
+      baseDN: ou=people,dc=vpydio,dc=fr
+      filter: "(objectClass=eduPerson)"
+      username: uid
+      idAttr: uid
+      emailAttr: mail
+      nameAttr: displayName
+    groupSearch:
+      # Would translate to the query "(&(objectClass=group)(member=<user uid>))"
+      baseDN: cn=groups,dc=example,dc=com
+      filter: "(objectClass=group)"
+      userAttr: uid
+      # Use if full DN is needed and not available as any other attribute
+      # Will only work if "DN" attribute does not exist in the record
+      # userAttr: DN
+      groupAttr: member
+      nameAttr: uid
+
 # - type: oidc
 #   id: google
 #   name: Google

@@ -52,6 +52,7 @@ type Storage interface {
 	CreateAuthCode(c AuthCode) error
 	CreateRefresh(r RefreshToken) error
 	CreatePassword(p Password) error
+	//CreatePydioUser(p PydioUser) error
 	CreateOfflineSessions(s OfflineSessions) error
 	CreateConnector(c Connector) error
 
@@ -63,12 +64,14 @@ type Storage interface {
 	GetKeys() (Keys, error)
 	GetRefresh(id string) (RefreshToken, error)
 	GetPassword(email string) (Password, error)
+	//GetPydioUser(login string) (PydioUser, error)
 	GetOfflineSessions(userID string, connID string) (OfflineSessions, error)
 	GetConnector(id string) (Connector, error)
 
 	ListClients() ([]Client, error)
 	ListRefreshTokens() ([]RefreshToken, error)
 	ListPasswords() ([]Password, error)
+	//ListPydioUsers() ([]PydioUser, error)
 	ListConnectors() ([]Connector, error)
 
 	// Delete methods MUST be atomic.
@@ -77,6 +80,7 @@ type Storage interface {
 	DeleteClient(id string) error
 	DeleteRefresh(id string) error
 	DeletePassword(email string) error
+	//DeletePydioUser(login string) error
 	DeleteOfflineSessions(userID string, connID string) error
 	DeleteConnector(id string) error
 
@@ -99,6 +103,7 @@ type Storage interface {
 	UpdateAuthRequest(id string, updater func(a AuthRequest) (AuthRequest, error)) error
 	UpdateRefreshToken(id string, updater func(r RefreshToken) (RefreshToken, error)) error
 	UpdatePassword(email string, updater func(p Password) (Password, error)) error
+	//UpdatePydioUser(login string, updater func(p PydioUser) (PydioUser, error)) error
 	UpdateOfflineSessions(userID string, connID string, updater func(s OfflineSessions) (OfflineSessions, error)) error
 	UpdateConnector(id string, updater func(c Connector) (Connector, error)) error
 
@@ -295,6 +300,10 @@ type Password struct {
 	UserID string `json:"userID"`
 }
 
+type PydioUser struct{
+	Login string `json:"login"`
+	Password string `json:"password"`
+}
 // Connector is an object that contains the metadata about connectors used to login to Dex.
 type Connector struct {
 	// ID that will uniquely identify the connector object.

@@ -117,6 +117,7 @@ const (
 const (
 	grantTypeAuthorizationCode = "authorization_code"
 	grantTypeRefreshToken      = "refresh_token"
+	grantTypePassword		   = "password"
 )
 
 const (
@@ -296,6 +297,9 @@ func (s *Server) newIDToken(clientID string, claims storage.Claims, scopes []str
 	}
 
 	for _, scope := range scopes {
+
+		s.logger.Info("scope scan range: ", scope)
+
 		switch {
 		case scope == scopeEmail:
 			tok.Email = claims.Email

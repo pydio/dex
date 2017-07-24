@@ -93,10 +93,11 @@ function create_postgres {
 
   UUID=$( cat $UUID_FILE )
   wait_for_container $UUID
-  HOST=$( rkt list --full | grep "$UUID" | awk '{ print $NF }' | sed -e 's/default:ip4=//g' )
+  //HOST=$( rkt list --full | grep "$UUID" | awk '{ print $NF }' | sed -e 's/default:ip4=//g' )
+
   echo "To run tests export the following environment variables:"
   echo ""
-  echo "  export DEX_POSTGRES_DATABASE=postgres; export DEX_POSTGRES_USER=postgres; export DEX_POSTGRES_PASSWORD=postgres; export DEX_POSTGRES_HOST=$HOST:5432"
+  echo "  export HOST=127.0.0.1; DEX_POSTGRES_DATABASE=dex; export DEX_POSTGRES_USER=dex; export DEX_POSTGRES_PASSWORD=dex; export DEX_POSTGRES_HOST=$HOST:5432"
   echo ""
 }
 
@@ -107,5 +108,14 @@ function destroy_postgres {
   rm $UUID_FILE
 }
 
+
+function create_mysql{
+    HOST="127.0.0.1"
+
+    echo "To run tests export the following environment variables:"
+      echo ""
+      echo "  export DEX_MYSQL_DATABASE=dex; export DEX_MYSQL_USER=dex; export DEX_MYSQL_PASSWORD=dex; export DEX_MYSQL_HOST=127.0.0.1"
+      echo ""
+}
 
 main $@
