@@ -4,6 +4,7 @@ package connector
 import (
 	"context"
 	"net/http"
+	"google.golang.org/genproto/googleapis/iam/admin/v1"
 )
 
 // Connector is a mechanism for federating login to a remote identity service.
@@ -16,12 +17,16 @@ type Connector interface{}
 type Scopes struct {
 	// The client has requested a refresh token from the server.
 	OfflineAccess bool
-
 	// The client has requested group information about the end user.
-	Groups bool
+	Groups 	bool
+	OpenID 	bool
+	Profile bool
+	Email 	bool
+	Roles	bool
 }
 
 // Identity represents the ID Token claims supported by the server.
+// Should be added
 type Identity struct {
 	UserID        string
 	Username      string
