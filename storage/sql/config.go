@@ -192,7 +192,7 @@ func (s *MySQL) open(logger logrus.FieldLogger) (*conn, error) {
 	set("autocommit", "false")
 
 	// Set isolation transaction
-	//set("tx_isolation", "SERIALIZABLE")
+	set("tx_isolation", "SERIALIZABLE")
 	//set("connect_timeout", strconv.Itoa(100))
 
 	if s.Port == ""{

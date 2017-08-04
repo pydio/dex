@@ -100,16 +100,11 @@ var (
 			{bindRegexp, "?"},
 			{matchLiteral("timestamptz"), "datetime(6)"},
 			{matchLiteral("bytea"), "blob"},
-			{matchLiteral("id text"), "id varchar(255)"},
-			{matchLiteral("password"), "tb_password"},
+			{matchLiteral("text"), "varchar(555)"},
 			{matchLiteral("keys"), "tb_keys"},
-			{matchLiteral("hash"), "f_hash"},
-			//{matchLiteral("client"), "tb_client"},
-			{matchLiteral("email text"), "email varchar(255)"},
-			{matchLiteral("user_id text"), "user_id varchar(255)"},
-			{matchLiteral("conn_id text"), "conn_id varchar(255)"},
-			{matchLiteral("token text"), "token varchar(255)"},
-			{matchLiteral(" UTC"), ""},
+			//{regexp.MustCompile(`\b(keys)\b`), "`$1`"},
+			// Change default timestamp to fit datetime.
+			{regexp.MustCompile(`0001-01-01 00:00:00 UTC`), "1000-01-01 00:00:00"},
 		},
 
 		executeTx: func(db *sql.DB, fn func(sqlTx *sql.Tx) error) error {
