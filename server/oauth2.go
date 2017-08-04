@@ -107,6 +107,7 @@ const (
 	scopeGroups            = "groups"
 	scopeEmail             = "email"
 	scopeProfile           = "profile"
+	scopeRoles           = "roles"
 	scopeCrossClientPrefix = "audience:server:client_id:"
 )
 
@@ -117,6 +118,8 @@ const (
 const (
 	grantTypeAuthorizationCode = "authorization_code"
 	grantTypeRefreshToken      = "refresh_token"
+
+	// added for pydio
 	grantTypePassword		   = "password"
 )
 
@@ -126,6 +129,7 @@ const (
 	responseTypeIDToken = "id_token" // ID Token in url fragment
 )
 
+
 func parseScopes(scopes []string) connector.Scopes {
 	var s connector.Scopes
 	for _, scope := range scopes {
@@ -134,6 +138,14 @@ func parseScopes(scopes []string) connector.Scopes {
 			s.OfflineAccess = true
 		case scopeGroups:
 			s.Groups = true
+		case scopeOpenID:
+			s.OpenID = true
+		case scopeEmail:
+			s.Email = true
+		case scopeProfile:
+			s.Profile = true
+		case scopeRoles:
+			s.Roles	= true
 		}
 	}
 	return s

@@ -806,7 +806,7 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 
 	//p, err := s.storage.GetPassword(username)
 
-	ldap, err := s.getConnector("ldap")
+	ldap, err := s.getConnector("pydio-sql")
 
 	passwordConnector, ok := ldap.Connector.(connector.PasswordConnector)
 	if !ok {
@@ -828,13 +828,11 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 		return
 	}
 
-
 	// if okay, return Access Token, TokenID and refreshToken
 	s.logger.Info("IdToken for: ", identity.UserID)
 	s.logger.Info("IdToken email: ", identity.Email)
 
-	claims := storage.Claims{ identity.UserID, identity.Username, identity.Email, identity.EmailVerified, nil}
-
+	claims := storage.Claims{identity.UserID,	identity.Username,identity.Email,identity.EmailVerified, nil}
 
 	accessToken := storage.NewID()
 
@@ -843,7 +841,7 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 		ClientID:    client.ID,
 		Claims: claims,
 		Nonce:       nonce,
-		ConnectorID: "ldap",
+		ConnectorID: "pydio-sql",
 	}
 
 	idToken, expiry, err := s.newIDToken(client.ID, claims, scopes, authCode.Nonce, accessToken, authCode.ConnectorID)
@@ -979,6 +977,9 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 
 	s.writeAccessToken(w, idToken, accessToken, refreshToken, expiry)
 }
+
+// ==================================
+
 // handle a refresh token request https://tools.ietf.org/html/rfc6749#section-6
 func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, client storage.Client) {
 	code := r.PostFormValue("refresh_token")
