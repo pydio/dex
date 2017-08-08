@@ -176,22 +176,10 @@ func (p *pydioLDAPConnector) MapUser(ruleSet []lib_pydio_ldap.MappingRule, user 
 				rightValues = sanitizeValues(rightValues)
 
 				if rule.LeftAttribute == "Roles" {
-					fmt.Printf("Rule name: %s", rule.RuleName)
-					fmt.Println("")
-					fmt.Printf("user list: %v", sanitizeValues(strings.Split(rule.RuleString, ",")))
-					fmt.Println("")
-					fmt.Printf("ldap list: %v", rightValues)
-					fmt.Println("===========")
-
 					if rule.RuleString != "" {
 						rightValues = filterPreg(rule.RuleString, rightValues)
-						fmt.Printf("after filter preg: %v", rightValues)
-						fmt.Println("===========")
 						rightValues = filterList(sanitizeValues(strings.Split(rule.RuleString, ",")), rightValues)
 					}
-
-					fmt.Printf("after filter list: %v", rightValues)
-					fmt.Println("===========")
 					rightValues = addPrefix(rule.RolePrefix, rightValues)
 				}
 
