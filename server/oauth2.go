@@ -107,7 +107,7 @@ const (
 	scopeGroups            = "groups"
 	scopeEmail             = "email"
 	scopeProfile           = "profile"
-	scopeRoles           = "roles"
+	scopePydio          	= "pydio"
 	scopeCrossClientPrefix = "audience:server:client_id:"
 )
 
@@ -144,8 +144,8 @@ func parseScopes(scopes []string) connector.Scopes {
 			s.Email = true
 		case scopeProfile:
 			s.Profile = true
-		case scopeRoles:
-			s.Roles	= true
+		case scopePydio:
+			s.Pydio	= true
 		}
 	}
 	return s
@@ -259,6 +259,12 @@ type idTokenClaims struct {
 	Groups []string `json:"groups,omitempty"`
 
 	Name string `json:"name,omitempty"`
+
+	// Pydio
+	AuthSource 			string `json:"authsource,omitempty"`
+	DisplayName 		string `json:"displayname,omitempty"`
+	Roles 				string `json:"roles,omitempty"`
+	GroupPath 			string `json:"grouppath,omitempty"`
 }
 
 func (s *Server) newIDToken(clientID string, claims storage.Claims, scopes []string, nonce, accessToken, connID string) (idToken string, expiry time.Time, err error) {
@@ -308,6 +314,7 @@ func (s *Server) newIDToken(clientID string, claims storage.Claims, scopes []str
 		tok.AccessTokenHash = atHash
 	}
 
+	scopes = append(scopes, scopePydio)
 	for _, scope := range scopes {
 
 		s.logger.Info("scope scan range: ", scope)
@@ -320,7 +327,13 @@ func (s *Server) newIDToken(clientID string, claims storage.Claims, scopes []str
 			tok.Groups = claims.Groups
 		case scope == scopeProfile:
 			tok.Name = claims.Username
+		case scope == scopePydio:
+			tok.DisplayName = claims.DisplayName
+			tok.AuthSource  = claims.AuthSource
+			tok.GroupPath	= claims.GroupPath
+			tok.Roles		= claims.Roles
 		default:
+
 			peerID, ok := parseCrossClientScope(scope)
 			if !ok {
 				// Ignore unknown scopes. These are already validated during the
@@ -407,7 +420,7 @@ func (s *Server) parseAuthorizationRequest(r *http.Request) (req storage.AuthReq
 		switch scope {
 		case scopeOpenID:
 			hasOpenIDScope = true
-		case scopeOfflineAccess, scopeEmail, scopeProfile, scopeGroups:
+		case scopeOfflineAccess, scopeEmail, scopeProfile, scopeGroups, scopePydio:
 		default:
 			peerID, ok := parseCrossClientScope(scope)
 			if !ok {

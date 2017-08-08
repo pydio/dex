@@ -7,7 +7,6 @@ import (
 	"io"
 	"strings"
 	"time"
-
 	jose "gopkg.in/square/go-jose.v2"
 )
 
@@ -148,6 +147,12 @@ type Claims struct {
 	EmailVerified bool
 
 	Groups []string
+
+	//Uuid 			string
+	AuthSource		string
+	DisplayName 	string
+	Roles			string
+	GroupPath		string
 }
 
 // AuthRequest represents a OAuth2 client authorization request. It holds the state
@@ -182,6 +187,9 @@ type AuthRequest struct {
 	// The identity of the end user. Generally nil until the user authenticates
 	// with a backend.
 	Claims Claims
+
+	// Additional claims for Pydio
+	PClaims PydioClaims
 
 	// The connector used to login the user and any data the connector wishes to persists.
 	// Set when the user authenticates.
@@ -220,6 +228,8 @@ type AuthCode struct {
 	ConnectorID   string
 	ConnectorData []byte
 	Claims        Claims
+	// Additional claims for Pydio
+	PClaims PydioClaims
 
 	Expiry time.Time
 }
@@ -244,6 +254,8 @@ type RefreshToken struct {
 	ConnectorID   string
 	ConnectorData []byte
 	Claims        Claims
+	// Additional claims for Pydio
+	PClaims PydioClaims
 
 	// Scopes present in the initial request. Refresh requests may specify a set
 	// of scopes different from the initial request when refreshing a token,

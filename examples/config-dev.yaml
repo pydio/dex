@@ -80,6 +80,18 @@ connectors:
 - type: pydio-ldap
   id: pydio-ldap
   name: Pydio LDAP Test
+
+mappingrules:
+- RuleName: rule01
+  LeftAttribute: DisplayName
+  RightAttribute: displayName
+  RuleString: ""
+- RuleName: rule02
+  LeftAttribute: Roles
+  RightAttribute: eduPersonAffiliation
+  RuleString: "ldap_"
+
+
 #- type: Pydio
 #  id: pydio
 #  name: Pydio Authentication

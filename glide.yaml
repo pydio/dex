@@ -103,7 +103,7 @@ import:
 - package: github.com/lib/pq
   version: 50761b0867bd1d9d069276790bcd4a3bccf2324a
 - package: github.com/go-sql-driver/mysql
-  version: 0b58b37b664c21f3010e836f1b931e1d0b0b0685
+  version: 3955978caca48c1658a4bb7a9c6a0f084e326af3
 - package: github.com/cockroachdb/cockroach-go
   version: 31611c0501c812f437d4861d87d117053967c955
   subpackages:
@@ -143,3 +143,7 @@ import:
   version: 4cd0dd976db869f817248477718071a28e978df0
 - package: github.com/jonboulle/clockwork
   version: bcac9884e7502bb2b474c0339d889cb981a2f27f
+
+# PYDIO lib
+- package: github.com/pydio/poc
+  version: 62e8bc8a8ba72200166358623eb0725a423cf069

@@ -97,7 +97,8 @@ var migrations = []migration{
 				claims_username text not null,
 				claims_email text not null,
 				claims_email_verified boolean not null,
-				claims_groups bytea not null, 
+				claims_groups bytea not null,
+				claims_pydio bytea,					-- JSON object
 
 				connector_id text not null,
 				connector_data bytea,
@@ -116,7 +117,8 @@ var migrations = []migration{
 				claims_username text not null,
 				claims_email text not null,
 				claims_email_verified boolean not null,
-				claims_groups bytea not null, 
+				claims_groups bytea not null,
+				claims_pydio bytea,					-- JSON object
 
 				connector_id text not null,
 				connector_data bytea,
@@ -134,7 +136,8 @@ var migrations = []migration{
 				claims_username text not null,
 				claims_email text not null,
 				claims_email_verified boolean not null,
-				claims_groups bytea not null, 
+				claims_groups bytea not null,
+				claims_pydio bytea,					-- JSON object
 
 				connector_id text not null,
 				connector_data bytea

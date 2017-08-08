@@ -1,5 +1,5 @@
-hash: 94ea60e268ee0ed04e8affdee4db2884fd93ee68ed625d88ccc0e24565b98569
-updated: 2017-04-13T11:28:49.008994259-07:00
+hash: 7e85fb2ad5dfcabc759c3b1db5a390ba178055224514de5b2cac3d3e90550d93
+updated: 2017-08-04T15:14:29.572541481+02:00
 imports:
 - name: github.com/beevik/etree
   version: 4cd0dd976db869f817248477718071a28e978df0
@@ -12,7 +12,7 @@ imports:
 - name: github.com/ghodss/yaml
   version: bea76d6a4713e18b7f5321a2b020738552def3ea
 - name: github.com/go-sql-driver/mysql
-  version: 0b58b37b664c21f3010e836f1b931e1d0b0b0685
+  version: 3955978caca48c1658a4bb7a9c6a0f084e326af3
 - name: github.com/golang/protobuf
   version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
   subpackages:
@@ -47,6 +47,10 @@ imports:
   version: c97913dcbd76de40b051a9b4cd827f7eaeb7a868
   subpackages:
   - cacheobject
+- name: github.com/pydio/poc
+  version: 62e8bc8a8ba72200166358623eb0725a423cf069
+  subpackages:
+  - lib-pydio-ldap
 - name: github.com/russellhaering/goxmldsig
   version: eaac44c63fe007124f8f6255b09febc906784981
   subpackages:

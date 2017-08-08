@@ -4,7 +4,7 @@ package connector
 import (
 	"context"
 	"net/http"
-	"google.golang.org/genproto/googleapis/iam/admin/v1"
+	"strings"
 )
 
 // Connector is a mechanism for federating login to a remote identity service.
@@ -22,7 +22,7 @@ type Scopes struct {
 	OpenID 	bool
 	Profile bool
 	Email 	bool
-	Roles	bool
+	Pydio	bool
 }
 
 // Identity represents the ID Token claims supported by the server.
@@ -34,6 +34,14 @@ type Identity struct {
 	EmailVerified bool
 
 	Groups []string
+
+	// Additional claims for Pydio
+	// To be added
+	//Uuid 			string
+	AuthSource		string
+	DisplayName 	string
+	Roles			string
+	GroupPath		string
 
 	// ConnectorData holds data used by the connector for subsequent requests after initial
 	// authentication, such as access tokens for upstream provides.
@@ -99,3 +107,44 @@ type RefreshConnector interface {
 	// changes since the token was last refreshed.
 	Refresh(ctx context.Context, s Scopes, identity Identity) (Identity, error)
 }
+
+
+// Pydio
+func SetAttribute(i *Identity, attName string, attVal []string) (err error){
+	if len(attVal) == 0 {
+		return nil
+	}
+
+	switch strings.TrimSpace(attName) {
+	case "UserID":
+		i.UserID = attVal[0]
+	case "UserName":
+		i.Username = attVal[0]
+	case "Email":
+		i.Email = attVal[0]
+		//case "EmailVerified":
+		//	i.EmailVerified = true
+	case "AuthSource":
+		i.AuthSource = attVal[0]
+	case "DisplayName":
+		i.DisplayName = attVal[0]
+	case "GroupPath":
+		i.GroupPath = attVal[0]
+
+	case "Roles":
+		if len(attVal) > 0 {
+			roles := strings.TrimSpace(attVal[0])
+			for _, val := range attVal[1:] {
+				roles = roles + "," + strings.TrimSpace(val)
+			}
+			if i.Roles == ""{
+				i.Roles = roles
+			}else {
+				i.Roles = i.Roles + "," + roles
+			}
+		}
+	default:
+	}
+	return nil
+}
+

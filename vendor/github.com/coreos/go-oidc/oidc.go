@@ -28,6 +28,8 @@ const (
 	//
 	// See: https://openid.net/specs/openid-connect-core-1_0.html#OfflineAccess
 	ScopeOfflineAccess = "offline_access"
+
+	ScopePydio = "pydio"
 )
 
 // ClientContext returns a new Context that carries the provided HTTP client.

@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	jose "gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2"
 
 	"github.com/coreos/dex/connector"
 	"github.com/coreos/dex/server/internal"
@@ -111,7 +111,7 @@ func (s *Server) discoveryHandler() (http.HandlerFunc, error) {
 		Keys:        s.absURL("/keys"),
 		Subjects:    []string{"public"},
 		IDTokenAlgs: []string{string(jose.RS256)},
-		Scopes:      []string{"openid", "email", "groups", "profile", "offline_access"},
+		Scopes:      []string{"openid", "email", "groups", "profile", "offline_access", "pydio"},
 		AuthMethods: []string{"client_secret_basic"},
 		Claims: []string{
 			"aud", "email", "email_verified", "exp",
@@ -292,6 +292,10 @@ func (s *Server) handleConnectorLogin(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 
 		identity, ok, err := passwordConnector.Login(r.Context(), scopes, username, password)
+
+		fmt.Printf("Identify after login: %v", identity)
+		fmt.Println("")
+
 		if err != nil {
 			s.logger.Errorf("Failed to login user: %v", err)
 			s.renderError(w, http.StatusInternalServerError, "Login error.")
@@ -399,9 +403,18 @@ func (s *Server) finalizeLogin(identity connector.Identity, authReq storage.Auth
 		Groups:        identity.Groups,
 	}
 
+	pClaims := storage.PydioClaims{
+		AuthSource:    identity.AuthSource,
+		DisplayName:   identity.DisplayName,
+		Roles:         identity.Roles,
+		GroupPath:     identity.GroupPath,
+	}
+
+
 	updater := func(a storage.AuthRequest) (storage.AuthRequest, error) {
 		a.LoggedIn = true
 		a.Claims = claims
+		a.PClaims = pClaims
 		a.ConnectorData = identity.ConnectorData
 		return a, nil
 	}
@@ -495,6 +508,9 @@ func (s *Server) sendCodeResponse(w http.ResponseWriter, r *http.Request, authRe
 				Nonce:         authReq.Nonce,
 				Scopes:        authReq.Scopes,
 				Claims:        authReq.Claims,
+				//Pydio
+				PClaims:	   authReq.PClaims,
+				//=====
 				Expiry:        s.now().Add(time.Minute * 30),
 				RedirectURI:   authReq.RedirectURI,
 				ConnectorData: authReq.ConnectorData,
@@ -592,8 +608,8 @@ func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
 		clientSecret = r.PostFormValue("client_secret")
 	}
 
-	s.logger.Info("Client ID: %v", clientID)
-	s.logger.Info("Client clientSecret: %v", clientSecret)
+	//s.logger.Info("Client ID: %v", clientID)
+	//s.logger.Info("Client clientSecret: %v", clientSecret)
 
 	client, err := s.storage.GetClient(clientID)
 	if err != nil {
@@ -612,7 +628,7 @@ func (s *Server) handleToken(w http.ResponseWriter, r *http.Request) {
 
 	grantType := r.PostFormValue("grant_type")
 
-	s.logger.Info("Grant Type %v", grantType)
+	s.logger.Info("Grant Type: ", grantType)
 
 	switch grantType {
 	case grantTypeAuthorizationCode:
@@ -647,8 +663,18 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
 		return
 	}
 
+	// Pydio
+	claims := authCode.Claims
+	authCode.PClaims.SetToClaims(&claims)
+
+fmt.Printf("claims: %v", claims)
+	fmt.Println("")
+fmt.Println("pclaims: %v", authCode.PClaims)
+	fmt.Println("")
+
 	accessToken := storage.NewID()
-	idToken, expiry, err := s.newIDToken(client.ID, authCode.Claims, authCode.Scopes, authCode.Nonce, accessToken, authCode.ConnectorID)
+	//idToken, expiry, err := s.newIDToken(client.ID, authCode.Claims, authCode.Scopes, authCode.Nonce, accessToken, authCode.ConnectorID)
+	idToken, expiry, err := s.newIDToken(client.ID, claims, authCode.Scopes, authCode.Nonce, accessToken, authCode.ConnectorID)
 	if err != nil {
 		s.logger.Errorf("failed to create ID token: %v", err)
 		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
@@ -660,6 +686,8 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
 		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
 		return
 	}
+
+
 
 	reqRefresh := func() bool {
 		// Ensure the connector supports refresh tokens.
@@ -693,6 +721,9 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
 			ConnectorID:   authCode.ConnectorID,
 			Scopes:        authCode.Scopes,
 			Claims:        authCode.Claims,
+			//Pydio
+			PClaims:		authCode.PClaims,
+			//====
 			Nonce:         authCode.Nonce,
 			ConnectorData: authCode.ConnectorData,
 			CreatedAt:     s.now(),
@@ -783,17 +814,18 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
 
 		}
 	}
+
+	fmt.Printf("====OK==== until now", )
+	fmt.Println("")
 	s.writeAccessToken(w, idToken, accessToken, refreshToken, expiry)
 }
 
 // ==================================
-func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, client storage.Client){
+func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, client storage.Client) {
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 	scopes := strings.Split(r.PostFormValue("scope"), " ")
 	nonce := r.PostFormValue("nonce")
-
-	s.logger.Info("Enter handleCredentialGrant func")
 
 	if username == "" || password == "" {
 		// Respose with error message
@@ -803,10 +835,8 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 	}
 
 	// Try to login with username/password
-
 	//p, err := s.storage.GetPassword(username)
-
-	ldap, err := s.getConnector("pydio-sql")
+	ldap, err := s.getConnector("pydio-ldap")
 
 	passwordConnector, ok := ldap.Connector.(connector.PasswordConnector)
 	if !ok {
@@ -814,9 +844,8 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 		return
 	}
 
-	scope2 := connector.Scopes{OfflineAccess: true, Groups: false}
-
-	identity, ok, err := passwordConnector.Login(r.Context(), scope2, username, password)
+	ldapScopes := parseScopes(scopes)
+	identity, ok, err := passwordConnector.Login(r.Context(), ldapScopes, username, password)
 
 	if err != nil {
 		s.logger.Info("Failed to login user: ", err)
@@ -832,14 +861,28 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 	s.logger.Info("IdToken for: ", identity.UserID)
 	s.logger.Info("IdToken email: ", identity.Email)
 
-	claims := storage.Claims{identity.UserID,	identity.Username,identity.Email,identity.EmailVerified, nil}
+	claims := storage.Claims{
+		UserID:        identity.UserID,
+		Username:      identity.Username,
+		Email:         identity.Email,
+		EmailVerified: identity.EmailVerified,
+		Groups:        []string{},
+	}
+
+	requestScopes := parseScopes(scopes)
+	if requestScopes.Pydio {
+		claims.AuthSource = identity.AuthSource
+		claims.DisplayName    = identity.DisplayName
+		claims.Roles = identity.Roles
+		claims.GroupPath    = identity.GroupPath
+	}
 
 	accessToken := storage.NewID()
 
 	authCode := storage.AuthCode{
 		ID:          "",
 		ClientID:    client.ID,
-		Claims: claims,
+		Claims:      claims,
 		Nonce:       nonce,
 		ConnectorID: "pydio-sql",
 	}
@@ -1065,6 +1108,10 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
 		EmailVerified: refresh.Claims.EmailVerified,
 		Groups:        refresh.Claims.Groups,
 		ConnectorData: refresh.ConnectorData,
+		DisplayName:   refresh.Claims.DisplayName,
+		Roles:         refresh.Claims.Roles,
+		AuthSource:    refresh.Claims.AuthSource,
+		GroupPath:     refresh.Claims.GroupPath,
 	}
 
 	// Can the connector refresh the identity? If so, attempt to refresh the data
@@ -1088,6 +1135,10 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
 		Email:         ident.Email,
 		EmailVerified: ident.EmailVerified,
 		Groups:        ident.Groups,
+		AuthSource:    ident.AuthSource,
+		DisplayName:   ident.DisplayName,
+		Roles:         ident.Roles,
+		GroupPath:     ident.GroupPath,
 	}
 
 	accessToken := storage.NewID()
@@ -1122,6 +1173,10 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
 		old.Claims.Email = ident.Email
 		old.Claims.EmailVerified = ident.EmailVerified
 		old.Claims.Groups = ident.Groups
+		old.Claims.AuthSource = ident.AuthSource
+		old.Claims.DisplayName = ident.DisplayName
+		old.Claims.Roles = ident.Roles
+		old.Claims.GroupPath = ident.GroupPath
 		old.ConnectorData = ident.ConnectorData
 		old.LastUsed = lastUsed
 		return old, nil
