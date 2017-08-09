@@ -65,68 +65,56 @@ staticClients:
   secret: ZXhhbXBsZS1hcHAtc2VjcmV0
 
 connectors:
-#- type: mockCallback
-#  id: mock
-#  name: Example
-- type: pydio-sql
-  id: pydio-sql
-  name: pydio-sql test
-  config:
-    UserTableName	: ""
-    UserIDColumn	: ""
-    PasswordColumn	: ""
-    PasswordEncryptAlgo : ""
-
 - type: pydio-ldap
   id: pydio-ldap
-  name: Pydio LDAP Test
+  name: Pydio ldap Connector
+  config:
+    DomainName: "pydio.com"
+    Host: 192.168.0.8:389
+    Connection: normal
+    SkipVerifyCertificate: True
+    #RootCA: ""
+    #RootCAData: ""
+    BindDN: ""
+    BindPW: ""
+    User:
+      Dns:
+      - ou=people,dc=vpydio,dc=fr
+      - ou=visitor,dc=vpydio,dc=fr
+      Filter: (objectClass=eduPerson)
+      IDAttribute: "uid"
+      Scope: "sub"
+    Group:
+      Dns:
+      - ou=groups,dc=vpydio,dc=fr
+      Filter: (objectClass=groupOfNames)
+      IDAttribute: uid
+      DisplayAttribute: cn
+      Scope: "sub"
+    PageSize: 500
+    UserAttributeMeaningMemberOf: memberOf
+    SupportNestedGroup: false
+    activepydiomemberof: true
+    GroupValueFormatInMemberOf: dn
+    GroupAttributeMeaningMember: member
+    GroupAttributeMemberValueFormat: dn
+    MappingRules:
+      Rules:
+      - RuleName: rule01
+        LeftAttribute: DisplayName
+        RightAttribute: displayName
+        RuleString: ""
+      - RuleName: rule02
+        LeftAttribute: Roles
+        RightAttribute: eduPersonAffiliation
+        RuleString: ""
+        RolePrefix: "ldap_"
+      - RuleName: rule03
+        LeftAttribute: Roles
+        RightAttribute: memberOf
+        RuleString: ""
+        RolePrefix: "ldap_"
 
-mappingrules:
-- RuleName: rule01
-  LeftAttribute: DisplayName
-  RightAttribute: displayName
-  RuleString: ""
-- RuleName: rule02
-  LeftAttribute: Roles
-  RightAttribute: eduPersonAffiliation
-  RuleString: "ldap_"
-
-
-#- type: Pydio
-#  id: pydio
-#  name: Pydio Authentication
-#  config:
-#    BootstrapFile: /home/tran/Documents/sites/py8dev/data/plugins/boot.conf/bootstrap.json
-
-#- type: ldap
-#  id: ldap
-#  name: LDAP
-#  config:
-#    #host: ldap.example.com:636
-#    host: 192.168.0.8:389
-     # The following field is required if using port 389.
-#    insecureNoSSL: true
-    #rootCA: /etc/dex/ldap.ca
-#    bindDN: #uid=seviceaccount,cn=users,dc=example,dc=com
-#    bindPW: #password
-#    userSearch:
-      # Would translate to the query "(&(objectClass=person)(uid=<username>))"
-#      baseDN: ou=people,dc=vpydio,dc=fr
-#      filter: "(objectClass=eduPerson)"
-#      username: uid
-#      idAttr: uid
-#      emailAttr: mail
-#      nameAttr: displayName
-#    groupSearch:
-      # Would translate to the query "(&(objectClass=group)(member=<user uid>))"
-#      baseDN: cn=groups,dc=example,dc=com
-#      filter: "(objectClass=group)"
-#      userAttr: uid
-      # Use if full DN is needed and not available as any other attribute
-      # Will only work if "DN" attribute does not exist in the record
-      # userAttr: DN
-#      groupAttr: member
-#      nameAttr: uid
 
 # - type: oidc
 #   id: google

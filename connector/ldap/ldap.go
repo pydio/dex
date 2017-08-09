@@ -125,6 +125,8 @@ type Config struct {
 		// The attribute of the group that represents its name.
 		NameAttr string `json:"nameAttr"`
 	} `json:"groupSearch"`
+
+
 }
 
 func parseScope(s string) (int, bool) {

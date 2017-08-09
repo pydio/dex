@@ -312,10 +312,6 @@ type Password struct {
 	UserID string `json:"userID"`
 }
 
-type PydioUser struct{
-	Login string `json:"login"`
-	Password string `json:"password"`
-}
 // Connector is an object that contains the metadata about connectors used to login to Dex.
 type Connector struct {
 	// ID that will uniquely identify the connector object.

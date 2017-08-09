@@ -293,9 +293,6 @@ func (s *Server) handleConnectorLogin(w http.ResponseWriter, r *http.Request) {
 
 		identity, ok, err := passwordConnector.Login(r.Context(), scopes, username, password)
 
-		fmt.Printf("Identify after login: %v", identity)
-		fmt.Println("")
-
 		if err != nil {
 			s.logger.Errorf("Failed to login user: %v", err)
 			s.renderError(w, http.StatusInternalServerError, "Login error.")
@@ -666,12 +663,6 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
 	// Pydio
 	claims := authCode.Claims
 	authCode.PClaims.SetToClaims(&claims)
-
-fmt.Printf("claims: %v", claims)
-	fmt.Println("")
-fmt.Println("pclaims: %v", authCode.PClaims)
-	fmt.Println("")
-
 	accessToken := storage.NewID()
 	//idToken, expiry, err := s.newIDToken(client.ID, authCode.Claims, authCode.Scopes, authCode.Nonce, accessToken, authCode.ConnectorID)
 	idToken, expiry, err := s.newIDToken(client.ID, claims, authCode.Scopes, authCode.Nonce, accessToken, authCode.ConnectorID)
@@ -686,8 +677,6 @@ fmt.Println("pclaims: %v", authCode.PClaims)
 		s.tokenErrHelper(w, errServerError, "", http.StatusInternalServerError)
 		return
 	}
-
-
 
 	reqRefresh := func() bool {
 		// Ensure the connector supports refresh tokens.
@@ -814,9 +803,6 @@ fmt.Println("pclaims: %v", authCode.PClaims)
 
 		}
 	}
-
-	fmt.Printf("====OK==== until now", )
-	fmt.Println("")
 	s.writeAccessToken(w, idToken, accessToken, refreshToken, expiry)
 }
 
@@ -884,7 +870,10 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 		ClientID:    client.ID,
 		Claims:      claims,
 		Nonce:       nonce,
-		ConnectorID: "pydio-sql",
+		Scopes: scopes,
+
+		// TODO
+		ConnectorID: "pydio-ldap",
 	}
 
 	idToken, expiry, err := s.newIDToken(client.ID, claims, scopes, authCode.Nonce, accessToken, authCode.ConnectorID)
@@ -1017,7 +1006,6 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 
 		}
 	}
-
 	s.writeAccessToken(w, idToken, accessToken, refreshToken, expiry)
 }
 
