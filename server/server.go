@@ -26,10 +26,7 @@ import (
 	"github.com/coreos/dex/connector/oidc"
 	"github.com/coreos/dex/connector/saml"
 	"github.com/coreos/dex/storage"
-	//"github.com/coreos/dex/connector/pydio"
-	//"github.com/coreos/dex/connector/pydio"
-	"github.com/coreos/dex/connector/pydio-sql"
-	"github.com/coreos/dex/connector/pydio-ldap"
+	"github.com/coreos/dex/connector/pydio"
 )
 
 // LocalConnector is the local passwordDB connector which is an internal
@@ -389,8 +386,7 @@ var ConnectorsConfig = map[string]func() ConnectorConfig{
 	"mockCallback": func() ConnectorConfig { return new(mock.CallbackConfig) },
 	"mockPassword": func() ConnectorConfig { return new(mock.PasswordConfig) },
 	"ldap":         func() ConnectorConfig { return new(ldap.Config) },
-	"pydio-ldap":   func() ConnectorConfig { return new(pydio_ldap.Config) },
-	"pydio-sql":    func() ConnectorConfig { return new(pydio_sql.Config) },
+	"pydio":   		func() ConnectorConfig { return new(pydio.Config) },
 	"github":       func() ConnectorConfig { return new(github.Config) },
 	"gitlab":       func() ConnectorConfig { return new(gitlab.Config) },
 	"oidc":         func() ConnectorConfig { return new(oidc.Config) },
