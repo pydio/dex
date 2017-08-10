@@ -67,9 +67,17 @@ func (p *pydioWrapperConnector) Login(ctx context.Context, s connector.Scopes, u
 }
 
 func (p *pydioWrapperConnector) Refresh(ctx context.Context, s connector.Scopes, ident connector.Identity) (connector.Identity, error) {
-	p.logger.Printf("Refresh request for User ID: %s", ident.UserID)
-	ident.UserID = ident.UserID+"c"
-	return ident, nil
+	listConnector, _ := p.getConnectorList(p.logger)
+
+	for _, pydioConnector := range listConnector{
+		ident,  err := pydioConnector.Refresh(ctx, s, ident)
+		if err != nil {
+			p.logger.Info("Refresh request for user " + ident.UserID + " failed. Try to use next connectors")
+		}else{
+			return ident, nil
+		}
+	}
+	return connector.Identity{}, nil
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

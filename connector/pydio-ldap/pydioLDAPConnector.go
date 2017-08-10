@@ -100,6 +100,11 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 	}
 
 	fullAttributeUser, err := server.GetUser(username, expected)
+
+	if err != nil || fullAttributeUser == nil{
+		return connector.Identity{}, false, nil
+	}
+
 	// TODO Check scope
 	ident, err := p.MapUser(defaultRules, fullAttributeUser)
 	if err != nil {
@@ -156,7 +161,13 @@ func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, id
 
 	fullAttributeUser, err := server.GetUser(ident.UserID, expected)
 
-	// TODO Check scope
+	if err != nil{
+		return connector.Identity{}, err
+	}
+
+	if fullAttributeUser == nil{
+		return connector.Identity{}, fmt.Errorf("User not found")
+	}
 	newIdent, err := p.MapUser(defaultRules, fullAttributeUser)
 	if err != nil {
 		return connector.Identity{}, err

@@ -99,7 +99,7 @@ connectors:
         PageSize: 500
         UserAttributeMeaningMemberOf: memberOf
         SupportNestedGroup: false
-        activepydiomemberof: true
+        ActivePydioMemberOf: false
         GroupValueFormatInMemberOf: dn
         GroupAttributeMeaningMember: member
         GroupAttributeMemberValueFormat: dn

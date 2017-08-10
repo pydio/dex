@@ -822,7 +822,7 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 
 	// Try to login with username/password
 	//p, err := s.storage.GetPassword(username)
-	ldap, err := s.getConnector("pydio-ldap")
+	ldap, err := s.getConnector("pydio")
 
 	passwordConnector, ok := ldap.Connector.(connector.PasswordConnector)
 	if !ok {
@@ -865,15 +865,16 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 
 	accessToken := storage.NewID()
 
+	// fake authCode, because Grant Type does not authCode
 	authCode := storage.AuthCode{
 		ID:          "",
 		ClientID:    client.ID,
 		Claims:      claims,
 		Nonce:       nonce,
-		Scopes: scopes,
+		Scopes: 	 scopes,
 
 		// TODO
-		ConnectorID: "pydio-ldap",
+		ConnectorID: "pydio",
 	}
 
 	idToken, expiry, err := s.newIDToken(client.ID, claims, scopes, authCode.Nonce, accessToken, authCode.ConnectorID)
