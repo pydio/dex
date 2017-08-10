@@ -89,7 +89,7 @@ func (p *pydioWrapperConnector) getConnectorList(logger logrus.FieldLogger) (con
 }, err error){
 
 	// Sort
-
+	// TODO sort this list by id
 	// end sort
 	for _, connConfig := range p.Config.Connectors{
 		connConnector, er := createConnector(logger, connConfig.Type, p.Config)

@@ -97,9 +97,9 @@ connectors:
           DisplayAttribute: cn
           Scope: "sub"
         PageSize: 500
-        UserAttributeMeaningMemberOf: memberOf
         SupportNestedGroup: false
         ActivePydioMemberOf: false
+        UserAttributeMeaningMemberOf: memberOf
         GroupValueFormatInMemberOf: dn
         GroupAttributeMeaningMember: member
         GroupAttributeMemberValueFormat: dn
