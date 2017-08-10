@@ -9,6 +9,7 @@ import (
 	"github.com/coreos/dex/storage/sql"
 	"github.com/ghodss/yaml"
 	"github.com/kylelemons/godebug/pretty"
+	"fmt"
 )
 
 var _ = yaml.YAMLToJSON
@@ -138,4 +139,5 @@ logger:
 		t.Errorf("got!=want: %s", diff)
 	}
 
+	fmt.Printf("len: %d", len(c.StaticConnectors))
 }

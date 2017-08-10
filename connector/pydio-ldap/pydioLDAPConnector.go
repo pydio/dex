@@ -26,21 +26,21 @@ func (c *Config) OpenConnector(logger logrus.FieldLogger) (interface {
 	return c.openConnector(logger)
 }
 
-func (c *Config) openConnector(logger logrus.FieldLogger) (*pydioLDAPConnector, error) {
-	return &pydioLDAPConnector{*c, logger}, nil
+func (c *Config) openConnector(logger logrus.FieldLogger) (*PydioLDAPConnector, error) {
+	return &PydioLDAPConnector{*c, logger}, nil
 }
 
-type pydioLDAPConnector struct {
+type PydioLDAPConnector struct {
 	Config
 	logger logrus.FieldLogger
 }
 
 var (
-	_ connector.PasswordConnector = (*pydioLDAPConnector)(nil)
-	_ connector.RefreshConnector  = (*pydioLDAPConnector)(nil)
+	_ connector.PasswordConnector = (*PydioLDAPConnector)(nil)
+	_ connector.RefreshConnector  = (*PydioLDAPConnector)(nil)
 )
 
-func (p *pydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, username, password string) (identity connector.Identity, validPassword bool, err error) {
+func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, username, password string) (identity connector.Identity, validPassword bool, err error) {
 	p.logger.Printf("Login request for User:%s", username)
 	identity = connector.Identity{
 		UserID:        "",
@@ -109,7 +109,7 @@ func (p *pydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 	return ident, true, nil
 }
 
-func (p *pydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, ident connector.Identity) (connector.Identity, error) {
+func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, ident connector.Identity) (connector.Identity, error) {
 	p.logger.Printf("Refresh request for User ID: %s", ident.UserID)
 
 	conf := p.Config
@@ -164,7 +164,7 @@ func (p *pydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, id
 	return newIdent, nil
 }
 
-func (p *pydioLDAPConnector) MapUser(ruleSet []lib_pydio_ldap.MappingRule, user *ldap.Entry) (ident connector.Identity, err error) {
+func (p *PydioLDAPConnector) MapUser(ruleSet []lib_pydio_ldap.MappingRule, user *ldap.Entry) (ident connector.Identity, err error) {
 	//ident = connector.Identity{}
 	if len(ruleSet) > 0 {
 		for _, rule := range ruleSet {

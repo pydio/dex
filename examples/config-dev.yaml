@@ -14,14 +14,14 @@ issuer: http://127.0.0.1:5556/dex
 #    file: examples/2dex.db
 
 storage:
-  type: mysql
-  config:
-    Database: 	py8dev
-    User:		pydio
-    Password:	pydiopsss
-    Host:		127.0.0.1
-    #Port:		'3306'
-    Protocol:	tcp
+ type: mysql
+ config:
+   Database: py8dev
+   User: pydio
+   Password: pydiopsss
+   Host:  127.0.0.1
+   #Port:  '3306'
+   Protocol: tcp
 # Configuration for the HTTP endpoints.
 web:
   http: 0.0.0.0:5556
@@ -65,55 +65,68 @@ staticClients:
   secret: ZXhhbXBsZS1hcHAtc2VjcmV0
 
 connectors:
-- type: pydio-ldap
-  id: pydio-ldap
-  name: Pydio ldap Connector
+- type: pydio
+  id: pydio
+  name: Pydio aggregate Connector
   config:
-    DomainName: "pydio.com"
-    Host: 192.168.0.8:389
-    Connection: normal
-    SkipVerifyCertificate: True
-    #RootCA: ""
-    #RootCAData: ""
-    BindDN: ""
-    BindPW: ""
-    User:
-      Dns:
-      - ou=people,dc=vpydio,dc=fr
-      - ou=visitor,dc=vpydio,dc=fr
-      Filter: (objectClass=eduPerson)
-      IDAttribute: "uid"
-      Scope: "sub"
-    Group:
-      Dns:
-      - ou=groups,dc=vpydio,dc=fr
-      Filter: (objectClass=groupOfNames)
-      IDAttribute: uid
-      DisplayAttribute: cn
-      Scope: "sub"
-    PageSize: 500
-    UserAttributeMeaningMemberOf: memberOf
-    SupportNestedGroup: false
-    activepydiomemberof: true
-    GroupValueFormatInMemberOf: dn
-    GroupAttributeMeaningMember: member
-    GroupAttributeMemberValueFormat: dn
-    MappingRules:
-      Rules:
-      - RuleName: rule01
-        LeftAttribute: DisplayName
-        RightAttribute: displayName
-        RuleString: ""
-      - RuleName: rule02
-        LeftAttribute: Roles
-        RightAttribute: eduPersonAffiliation
-        RuleString: ""
-        RolePrefix: "ldap_"
-      - RuleName: rule03
-        LeftAttribute: Roles
-        RightAttribute: memberOf
-        RuleString: ""
-        RolePrefix: "ldap_"
+   pydioconnectors:
+    - type: pydio-ldap
+      name: pydio-ldap
+      id: 1
+      config:
+        DomainName: "pydio.com"
+        Host: 192.168.0.8:389
+        Connection: normal
+        SkipVerifyCertificate: True
+        #RootCA: ""
+        #RootCAData: ""
+        BindDN: ""
+        BindPW: ""
+        User:
+          Dns:
+          - ou=people,dc=vpydio,dc=fr
+          - ou=visitor,dc=vpydio,dc=fr
+          Filter: (objectClass=eduPerson)
+          IDAttribute: "uid"
+          Scope: "sub"
+        Group:
+          Dns:
+          - ou=groups,dc=vpydio,dc=fr
+          Filter: (objectClass=groupOfNames)
+          IDAttribute: uid
+          DisplayAttribute: cn
+          Scope: "sub"
+        PageSize: 500
+        UserAttributeMeaningMemberOf: memberOf
+        SupportNestedGroup: false
+        activepydiomemberof: true
+        GroupValueFormatInMemberOf: dn
+        GroupAttributeMeaningMember: member
+        GroupAttributeMemberValueFormat: dn
+        MappingRules:
+          Rules:
+          - RuleName: rule01
+            LeftAttribute: DisplayName
+            RightAttribute: displayName
+            RuleString: ""
+          - RuleName: rule02
+            LeftAttribute: Roles
+            RightAttribute: eduPersonAffiliation
+            RuleString: ""
+            RolePrefix: "ldap_"
+          - RuleName: rule03
+            LeftAttribute: Roles
+            RightAttribute: memberOf
+            RuleString: ""
+            RolePrefix: "ldap_"
+    - type: pydio-sql
+      name: externalDB
+      id: 2
+      config:
+    - type: pydio-sql
+      name: pydio-mysql-base
+      id: 0
+      config:
 
 
 # - type: oidc

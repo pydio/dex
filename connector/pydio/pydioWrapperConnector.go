@@ -1,13 +1,27 @@
-package pydio_sql
+package pydio
 
 import (
 	"github.com/coreos/dex/connector"
 	"github.com/Sirupsen/logrus"
 	"context"
 
+	"fmt"
+	"encoding/json"
+	"github.com/coreos/dex/connector/pydio-ldap"
+	"github.com/coreos/dex/connector/pydio-sql"
+	"github.com/coreos/dex/connector/pydio-userapi"
 )
 
 type Config struct {
+	Connectors []struct{
+		Type   string `json:"type"`
+		ID     int16 `json:"id"`
+		Name   string `json:"name"`
+		Config json.RawMessage `json:"config"`
+	} `json:"pydioconnectors"`
+}
+
+type Connector struct{
 
 }
 
@@ -38,28 +52,106 @@ var (
 )
 
 func (p *pydioWrapperConnector) Login(ctx context.Context, s connector.Scopes, username, password string) (identity connector.Identity, validPassword bool, err error){
-	p.logger.Printf("Login request for User:%s Password:%s", username, password)
-	identity = connector.Identity{
-		UserID: 	"username",
-		Username: 	"User Number 001",
-		Email:		"u001@pydio.com",
-		EmailVerified: true,
-		Uuid: 		"",
-		Sub: 			"",
-		Source: 		"",
-		DisplayName: 	"",
-		RoleIDs: 		"",
-		GroupPath: 		"",
-		Groups:			[]string{},
-		ConnectorData: 	nil,
-	}
+	listConnector, err := p.getConnectorList(p.logger)
 
-	return identity, true, nil
+	for _, pydioConnector := range listConnector{
+		identity, ok, err := pydioConnector.Login(ctx, s, username, password)
+		if err != nil{
+		   p.logger.Info("Login request for user " + username + " failed. Try to use next connectors")
+		}
+		if ok {
+			return identity, true, nil
+		}
+	}
+	return connector.Identity{}, false, nil
 }
 
 func (p *pydioWrapperConnector) Refresh(ctx context.Context, s connector.Scopes, ident connector.Identity) (connector.Identity, error) {
 	p.logger.Printf("Refresh request for User ID: %s", ident.UserID)
 	ident.UserID = ident.UserID+"c"
 	return ident, nil
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func (p *pydioWrapperConnector) getConnectorList(logger logrus.FieldLogger) (conns []interface {
+	connector.Connector
+	connector.PasswordConnector
+	connector.RefreshConnector
+}, err error){
+
+	// Sort
+
+	// end sort
+	for _, connConfig := range p.Config.Connectors{
+		connConnector, er := createConnector(logger, connConfig.Type, p.Config)
+		if er != nil{
+			logger.Errorf(er.Error())
+		}
+		conns = append(conns, connConnector.(interface{
+			connector.Connector
+			connector.PasswordConnector
+			connector.RefreshConnector
+		}))
+	}
+	return conns, nil
+}
+
+
+
+// Connector is a magical type that can unmarshal YAML dynamically. The
+// Type field determines the connector type, which is then customized for Config.
+type PydioConnector struct {
+	Type string `json:"type"`
+	Name string `json:"name"`
+	ID   string `json:"id"`
+
+	Config PydioConnectorConfig `json:"config"`
+}
+
+type PydioConnectorConfig interface {
+	Open(logrus.FieldLogger) (connector.Connector, error)
+}
+
+// ConnectorsConfig variable provides an easy way to return a config struct
+// depending on the connector type.
+var PydioConnectorsConfig = map[string]func() PydioConnectorConfig{
+	"pydio-ldap":   func() PydioConnectorConfig { return new(pydio_ldap.Config) },
+	"pydio-sql":    func() PydioConnectorConfig { return new(pydio_sql.Config) },
+	"pydio-api":    func() PydioConnectorConfig { return new(pydio_api.Config) },
+}
+
+// openConnector will parse the connector config and open the connector.
+func createConnector(logger logrus.FieldLogger, connectorType string, connectorList Config) (connector.Connector, error) {
+	var c connector.Connector
+
+	for _, connectorConfig := range connectorList.Connectors {
+		if connectorConfig.Type == connectorType {
+			//logger.Info("parse connector config: Type: Name == %s:%s", connectorConfig.Type, connectorConfig.Name)
+			f, ok := PydioConnectorsConfig[connectorType]
+			if !ok {
+				return c, fmt.Errorf("unknown connector type %q", connectorType)
+			}
+
+			connConfig := f()
+			if connectorConfig.Config != nil {
+				//data := []byte(connectorConfig.Config)
+				if err := json.Unmarshal(connectorConfig.Config, connConfig); err != nil {
+					logger.Errorf("parse connector config: %v", err)
+					return c, fmt.Errorf("parse connector config: %v", err)
+				}
+			}
+
+			c, err := connConfig.Open(logger)
+			if err != nil {
+				logger.Errorf("failed to create connector %s: %v", connectorConfig.ID, err)
+				return c, fmt.Errorf("failed to create connector %s: %v", connectorConfig.ID, err)
+			}
+
+			return c, nil
+		}
+	}
+
+	return nil, fmt.Errorf("unknown connector type %q", connectorType)
 }
 
