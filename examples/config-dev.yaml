@@ -119,6 +119,13 @@ connectors:
             RightAttribute: memberOf
             RuleString: ""
             RolePrefix: "ldap_"
+          - RuleName: rule04
+            LeftAttribute: Email
+            RightAttribute: mail
+          - RuleName: rule05
+            LeftAttribute: GroupPath
+            RightAttribute: Dn
+
     - type: pydio-sql
       name: externalDB
       id: 2
