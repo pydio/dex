@@ -5,6 +5,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"context"
 
+	"fmt"
 )
 
 type Config struct {
@@ -45,32 +46,46 @@ var (
 	_ connector.RefreshConnector  = (*pydioSQLConnector)(nil)
 )
 
-/*
-func (p *pydioSQLConnector) Open(logger logrus.FieldLogger) (connector.Connector, error){
-
-	return nil, nil
-}*/
-
 func (p *pydioSQLConnector) Login(ctx context.Context, s connector.Scopes, username, password string) (identity connector.Identity, validPassword bool, err error){
 	p.logger.Printf("Login request for User:%s Password:%s", username, password)
-	identity = connector.Identity{
-		UserID: 	"username",
-		Username: 	"User Number 001",
-		Email:		"u001@pydio.com",
-		EmailVerified: true,
-		DisplayName: 	"",
-		Roles: 		"",
-		GroupPath: 		"",
-		Groups:			[]string{},
-		ConnectorData: 	nil,
-	}
 
-	return identity, true, nil
+	if username == "username" && password == "P@ssw0rd" {
+
+		identity = connector.Identity{
+			UserID:        "username",
+			Username:      "User Number 001",
+			Email:         "u001@pydio.com",
+			EmailVerified: true,
+			DisplayName:   "",
+			Roles:         "",
+			GroupPath:     "",
+			Groups:        []string{},
+			ConnectorData: nil,
+		}
+		return identity, true, nil
+	}
+	return connector.Identity{}, false, fmt.Errorf("User not found")
 }
 
+
 func (p *pydioSQLConnector) Refresh(ctx context.Context, s connector.Scopes, ident connector.Identity) (connector.Identity, error) {
-	p.logger.Printf("Refresh request for User ID: %s", ident.UserID)
-	ident.UserID = ident.UserID+"c"
-	return ident, nil
+	p.logger.Printf("Login request for User:%s Password:%s", ident.UserID)
+
+	if ident.UserID != "" {
+
+		identity := connector.Identity{
+			UserID:        "username",
+			Username:      "User Number 001",
+			Email:         "u001@pydio.com",
+			EmailVerified: true,
+			DisplayName:   "",
+			Roles:         "",
+			GroupPath:     "",
+			Groups:        []string{},
+			ConnectorData: nil,
+		}
+		return identity, nil
+	}
+	return connector.Identity{}, fmt.Errorf("User not found")
 }
 

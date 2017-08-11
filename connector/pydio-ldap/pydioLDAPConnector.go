@@ -76,6 +76,7 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 		RuleString:     "",
 		RolePrefix:     "",
 	}
+
 	defaultRules = append(defaultRules, defaultRule)
 
 	if s.Pydio {
@@ -85,6 +86,14 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 				defaultRules = append(defaultRules, rule)
 			}
 		}
+		groupPathRule := lib_pydio_ldap.MappingRule{
+			RuleName:       "ldapDefaultRule02",
+			LeftAttribute:  "GroupPath",
+			RightAttribute: "ou",
+			RuleString:     "",
+			RolePrefix:     "",
+		}
+		defaultRules = append(defaultRules, groupPathRule)
 	}
 
 	expected := []string{}
@@ -107,12 +116,12 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 	}
 
 	for _, rule := range defaultRules{
-		if rule.LeftAttribute == "GroupPath"  && rule.RightAttribute == "Dn"{
+		if rule.LeftAttribute == "GroupPath"  && strings.ToLower(rule.RightAttribute) == "ou"{
 			groupPath := server.GetOUStack(fullAttributeUser.DN)
 			groupPath = groupPath[:len(groupPath) - 1]
 
 			// TODO escape comma
-			ident.GroupPath = strings.Join(groupPath, ",")
+			ident.GroupPath = "/" + strings.Join(groupPath, "/")
 		}
 	}
 
@@ -152,6 +161,15 @@ func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, id
 				defaultRules = append(defaultRules, rule)
 			}
 		}
+
+		groupPathRule := lib_pydio_ldap.MappingRule{
+			RuleName:       "ldapDefaultRule02",
+			LeftAttribute:  "GroupPath",
+			RightAttribute: "ou",
+			RuleString:     "",
+			RolePrefix:     "",
+		}
+		defaultRules = append(defaultRules, groupPathRule)
 	}
 
 	expected := []string{}
@@ -180,8 +198,7 @@ func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, id
 			groupPath := server.GetOUStack(fullAttributeUser.DN)
 			groupPath = groupPath[:len(groupPath) - 1]
 			// TODO escape comma
-			ident.GroupPath = strings.Join(groupPath, ",")
-			logger.Info("Group Path value: " + ident.GroupPath)
+			ident.GroupPath = "/" + strings.Join(groupPath, "/")
 			break
 		}
 	}

@@ -71,10 +71,11 @@ connectors:
   config:
    pydioconnectors:
     - type: pydio-ldap
-      name: pydio-ldap
-      id: 1
+      name: pydio-OpenLdap
+      id: 5
+      islast: true
       config:
-        DomainName: "pydio.com"
+        DomainName: "vpydio.fr"
         Host: 192.168.0.8:389
         Connection: normal
         SkipVerifyCertificate: True
@@ -122,17 +123,66 @@ connectors:
           - RuleName: rule04
             LeftAttribute: Email
             RightAttribute: mail
-          - RuleName: rule05
-            LeftAttribute: GroupPath
-            RightAttribute: Dn
-
-    - type: pydio-sql
-      name: externalDB
+    - type: pydio-ldap
+      name: pydio-activeDirectory
       id: 2
+      islast: true
       config:
+        DomainName: "lab.py"
+        Host: 192.168.0.11:389
+        Connection: normal
+        SkipVerifyCertificate: True
+        #RootCA: ""
+        #RootCAData: ""
+        BindDN: "pydio@lab.py"
+        BindPW: "P@ssw0rd"
+        User:
+          Dns:
+          - ou=company,dc=lab,dc=py
+          Filter: (objectClass=user)
+          IDAttribute: "samaccountname"
+          Scope: "sub"
+        Group:
+          Dns:
+          - ou=company,dc=lab,dc=py
+          Filter: (objectClass=group)
+          IDAttribute: samaccountname
+          DisplayAttribute: displayName
+          Scope: "sub"
+        PageSize: 500
+        SupportNestedGroup: false
+        ActivePydioMemberOf: false
+        UserAttributeMeaningMemberOf: memberOf
+        GroupValueFormatInMemberOf: dn
+        GroupAttributeMeaningMember: member
+        GroupAttributeMemberValueFormat: dn
+        MappingRules:
+          Rules:
+          - RuleName: rule01
+            LeftAttribute: DisplayName
+            RightAttribute: displayName
+            RuleString: ""
+          - RuleName: rule02
+            LeftAttribute: Roles
+            RightAttribute: eduPersonAffiliation
+            RuleString: ""
+            RolePrefix: "ldap_"
+          - RuleName: rule03
+            LeftAttribute: Roles
+            RightAttribute: memberOf
+            RuleString: ""
+            RolePrefix: "ldap_"
+          - RuleName: rule04
+            LeftAttribute: Email
+            RightAttribute: mail
+#    - type: pydio-sql
+#      name: externalDB
+#      id: 2
+#      config:
     - type: pydio-sql
       name: pydio-mysql-base
       id: 0
+      islast: true
       config:
 
 
