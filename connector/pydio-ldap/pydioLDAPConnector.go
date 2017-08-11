@@ -41,19 +41,9 @@ var (
 )
 
 func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, username, password string) (identity connector.Identity, validPassword bool, err error) {
-	p.logger.Printf("Login request for User:%s", username)
-	identity = connector.Identity{
-		UserID:        "",
-		Username:      "",
-		Email:         "",
-		EmailVerified: true,
-
-		Groups:        []string{},
-		ConnectorData: nil,
-	}
+	p.logger.Printf("LDAP: Login request for User:%s", username)
 
 	conf := p.Config
-
 	var logger logrus.FieldLogger
 	server, err := conf.OpenConnection(logger)
 	if err != nil {
@@ -66,7 +56,6 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 	if !ok {
 		return connector.Identity{}, false, fmt.Errorf("Login failed")
 	}
-
 
 	defaultRules := []lib_pydio_ldap.MappingRule{}
 	defaultRule := lib_pydio_ldap.MappingRule{
@@ -86,14 +75,6 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 				defaultRules = append(defaultRules, rule)
 			}
 		}
-		groupPathRule := lib_pydio_ldap.MappingRule{
-			RuleName:       "ldapDefaultRule02",
-			LeftAttribute:  "GroupPath",
-			RightAttribute: "ou",
-			RuleString:     "",
-			RolePrefix:     "",
-		}
-		defaultRules = append(defaultRules, groupPathRule)
 	}
 
 	expected := []string{}
@@ -115,24 +96,31 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 		return connector.Identity{}, false, err
 	}
 
+	isSetGroupPath := false
 	for _, rule := range defaultRules{
-		if rule.LeftAttribute == "GroupPath"  && strings.ToLower(rule.RightAttribute) == "ou"{
+		if rule.LeftAttribute == "GroupPath" && strings.ToLower(rule.RightAttribute) == "ou"{
 			groupPath := server.GetOUStack(fullAttributeUser.DN)
 			groupPath = groupPath[:len(groupPath) - 1]
-
 			// TODO escape comma
 			ident.GroupPath = "/" + strings.Join(groupPath, "/")
+			isSetGroupPath = true
+			break
 		}
 	}
 
-	// Set AuthSource value
-	ident.AuthSource = p.Config.DomainName
+	if !isSetGroupPath {
+		if domainName, err := server.GetNamingContext(); err != nil{
+			replacer := strings.NewReplacer(",", ".")
+			ident.GroupPath = "/" + replacer.Replace(domainName)
+		}
+	}
 
+	ident.AuthSource = p.Config.DomainName
 	return ident, true, nil
 }
 
 func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, ident connector.Identity) (connector.Identity, error) {
-	p.logger.Printf("Refresh request for User ID: %s", ident.UserID)
+	p.logger.Printf("LDAP: Refresh request for User ID: %s", ident.UserID)
 
 	conf := p.Config
 
@@ -161,15 +149,6 @@ func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, id
 				defaultRules = append(defaultRules, rule)
 			}
 		}
-
-		groupPathRule := lib_pydio_ldap.MappingRule{
-			RuleName:       "ldapDefaultRule02",
-			LeftAttribute:  "GroupPath",
-			RightAttribute: "ou",
-			RuleString:     "",
-			RolePrefix:     "",
-		}
-		defaultRules = append(defaultRules, groupPathRule)
 	}
 
 	expected := []string{}
@@ -193,16 +172,27 @@ func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, id
 		return connector.Identity{}, err
 	}
 
+	isSetGroupPath := false
 	for _, rule := range defaultRules{
 		if rule.LeftAttribute == "GroupPath" && strings.ToLower(rule.RightAttribute) == "ou"{
 			groupPath := server.GetOUStack(fullAttributeUser.DN)
 			groupPath = groupPath[:len(groupPath) - 1]
 			// TODO escape comma
-			ident.GroupPath = "/" + strings.Join(groupPath, "/")
+			newIdent.GroupPath = "/" + strings.Join(groupPath, "/")
+			isSetGroupPath = true
 			break
 		}
 	}
 
+	if !isSetGroupPath {
+		if domainName, err := server.GetNamingContext(); err != nil{
+			replacer := strings.NewReplacer(",", ".")
+			newIdent.GroupPath = "/" + replacer.Replace(domainName)
+		}
+	}
+
+	// Set AuthSource value
+	newIdent.AuthSource = p.Config.DomainName
 	return newIdent, nil
 }
 

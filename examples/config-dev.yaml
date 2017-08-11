@@ -162,11 +162,11 @@ connectors:
             LeftAttribute: DisplayName
             RightAttribute: displayName
             RuleString: ""
-          - RuleName: rule02
-            LeftAttribute: Roles
-            RightAttribute: eduPersonAffiliation
-            RuleString: ""
-            RolePrefix: "ldap_"
+#          - RuleName: rule02
+#            LeftAttribute: Roles
+#            RightAttribute: eduPersonAffiliation
+#            RuleString: ""
+#            RolePrefix: "ldap_"
           - RuleName: rule03
             LeftAttribute: Roles
             RightAttribute: memberOf
@@ -175,6 +175,9 @@ connectors:
           - RuleName: rule04
             LeftAttribute: Email
             RightAttribute: mail
+          - RuleName: rule05
+            LeftAttribute: "GroupPath"
+            RightAttribute: "ou"
 #    - type: pydio-sql
 #      name: externalDB
 #      id: 2

@@ -11,6 +11,7 @@ import (
 	"github.com/coreos/dex/connector/pydio-sql"
 	"github.com/coreos/dex/connector/pydio-userapi"
 	"sort"
+	"github.com/hashicorp/consul/logger"
 )
 
 type Config struct {
@@ -63,6 +64,10 @@ func (p *pydioWrapperConnector) Login(ctx context.Context, s connector.Scopes, u
 		}
 		if ok {
 			p.logger.Info("Login Ok for " + username)
+			if identity.GroupPath == "" {
+				identity.GroupPath = "/" + pydioConnector.Name
+			}
+			identity.AuthSource = pydioConnector.Name
 			return identity, true, nil
 		}
 	}
@@ -71,14 +76,24 @@ func (p *pydioWrapperConnector) Login(ctx context.Context, s connector.Scopes, u
 }
 
 func (p *pydioWrapperConnector) Refresh(ctx context.Context, s connector.Scopes, ident connector.Identity) (connector.Identity, error) {
-	listConnector, _ := p.getConnectorList(p.logger)
+	listConnector, err := p.getConnectorList(p.logger)
+	if err != nil {
+		return connector.Identity{}, err
+	}
 
 	for _, pydioConnector := range listConnector {
-		ident, err := pydioConnector.Connector.Refresh(ctx, s, ident)
+		identity, err := pydioConnector.Connector.Refresh(ctx, s, ident)
+		p.logger.Info("Refresh request for user " + ident.UserID + " on Sub-connector " + pydioConnector.Name)
 		if err != nil {
-			p.logger.Info("Refresh request for user " + ident.UserID + " failed. Try to use next connectors")
+			p.logger.Errorf(err.Error())
+			p.logger.Info("Failed! Try to use next connectors")
 		} else {
-			return ident, nil
+			p.logger.Info("Refresh Ok!")
+			if identity.GroupPath == "" {
+				identity.GroupPath = "/" + pydioConnector.Name
+			}
+			identity.AuthSource = pydioConnector.Name
+			return identity, nil
 		}
 	}
 	return connector.Identity{}, nil
