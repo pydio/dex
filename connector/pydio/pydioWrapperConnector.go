@@ -11,7 +11,6 @@ import (
 	"github.com/coreos/dex/connector/pydio-sql"
 	"github.com/coreos/dex/connector/pydio-userapi"
 	"sort"
-	"github.com/hashicorp/consul/logger"
 )
 
 type Config struct {
