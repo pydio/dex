@@ -40,7 +40,7 @@ type Identity struct {
 	//Uuid 			string
 	AuthSource		string
 	DisplayName 	string
-	Roles			string
+	Roles			[]string
 	GroupPath		string
 
 	// ConnectorData holds data used by the connector for subsequent requests after initial
@@ -133,14 +133,8 @@ func SetAttribute(i *Identity, attName string, attVal []string) (err error){
 
 	case "Roles":
 		if len(attVal) > 0 {
-			roles := strings.TrimSpace(attVal[0])
-			for _, val := range attVal[1:] {
-				roles = roles + "," + strings.TrimSpace(val)
-			}
-			if i.Roles == ""{
-				i.Roles = roles
-			}else {
-				i.Roles = i.Roles + "," + roles
+			for _, val := range attVal{
+				i.Roles = append(i.Roles, strings.TrimSpace(val))
 			}
 		}
 	default:

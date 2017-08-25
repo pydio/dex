@@ -71,7 +71,7 @@ connectors:
   config:
    pydioconnectors:
     - type: pydio-ldap
-      name: pydio-OpenLdap
+      name: openldap
       id: 5
       islast: true
       config:
@@ -88,7 +88,7 @@ connectors:
           - ou=people,dc=vpydio,dc=fr
           - ou=visitor,dc=vpydio,dc=fr
           Filter: (objectClass=eduPerson)
-          IDAttribute: "uid"
+          IDAttribute: uid
           Scope: "sub"
         Group:
           Dns:
@@ -124,8 +124,8 @@ connectors:
             LeftAttribute: Email
             RightAttribute: mail
     - type: pydio-ldap
-      name: pydio-activeDirectory
-      id: 2
+      name: msad
+      id: 20
       islast: true
       config:
         DomainName: "lab.py"
@@ -140,13 +140,13 @@ connectors:
           Dns:
           - ou=company,dc=lab,dc=py
           Filter: (objectClass=user)
-          IDAttribute: "samaccountname"
+          IDAttribute: sAMAccountName
           Scope: "sub"
         Group:
           Dns:
           - ou=company,dc=lab,dc=py
           Filter: (objectClass=group)
-          IDAttribute: samaccountname
+          IDAttribute: sAMAccountName
           DisplayAttribute: displayName
           Scope: "sub"
         PageSize: 500

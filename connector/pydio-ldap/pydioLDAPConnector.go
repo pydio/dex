@@ -93,6 +93,9 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 	// TODO Check scope
 	ident, err := p.MapUser(defaultRules, fullAttributeUser)
 	if err != nil {
+		fmt.Print("Mapp User error: ", ident.UserID)
+		fmt.Println("")
+
 		return connector.Identity{}, false, err
 	}
 
@@ -115,13 +118,15 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 		}
 	}
 
+	allGroup := fullAttributeUser.GetAttributeValues("memberOf")
+	for _, group := range allGroup{
+		fmt.Println("Group: " + group)
+	}
 	ident.AuthSource = p.Config.DomainName
 	return ident, true, nil
 }
 
 func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, ident connector.Identity) (connector.Identity, error) {
-	p.logger.Printf("LDAP: Refresh request for User ID: %s", ident.UserID)
-
 	conf := p.Config
 
 	var logger logrus.FieldLogger
@@ -165,7 +170,7 @@ func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, id
 	}
 
 	if fullAttributeUser == nil{
-		return connector.Identity{}, fmt.Errorf("User not found")
+		return connector.Identity{}, fmt.Errorf("User not found: userID: " + ident.UserID)
 	}
 	newIdent, err := p.MapUser(defaultRules, fullAttributeUser)
 	if err != nil {
