@@ -46,28 +46,45 @@ func (p PydioPW)checkPasswordMD5(password string, storePassword string) bool{
 	return strings.Compare(hex.EncodeToString(hasher.Sum(nil)), storePassword) == 0
 }
 
-func (p PydioPW)checkPasswordDBKDF2(password string, storePassword []byte, salt []byte, iter, totalSize int, algo string) bool {
-	pwd, _ := p.pbkdf2CreateHash([]byte(password), salt, iter, totalSize, algo)
-	return bytes.Equal(pwd, storePassword)
+func (p PydioPW)checkPasswordDBKDF2(password string, storePassword []byte, salt []byte, iter, totalSize int, algo string) (bool, error) {
+	pwd, err := p.pbkdf2CreateHash([]byte(password), salt, iter, totalSize, algo)
+	if err != nil{
+		return false, err
+	}
+	return bytes.Equal(pwd, storePassword), nil
 }
 
-func (p PydioPW)CheckDBKDF2PydioPwd(password string, hashedPw string) bool {
+func (p PydioPW)CheckDBKDF2PydioPwd(password string, hashedPw string) (bool, error) {
 	arrPwd := strings.Split(hashedPw, ":")
 	if len(arrPwd) < p.HASH_SECTIONS {
 		// MD5 password
-		return p.checkPasswordMD5(password, hashedPw)
+		return p.checkPasswordMD5(password, hashedPw), nil
 	}
 	if len(arrPwd) == p.HASH_SECTIONS{
 		base64Salt 		:= arrPwd[p.HASH_SALT_INDEX]
 		salt	 		:= []byte(base64Salt)
-		iter, _ 		:= strconv.Atoi(arrPwd[p.HASH_ITERATION_INDEX])
+		iter, err 		:= strconv.Atoi(arrPwd[p.HASH_ITERATION_INDEX])
+		if err != nil{
+			return false, err
+		}
+
 		algo			:= arrPwd[p.HASH_ALGORITHM_INDEX]
 		base64Pw 		:= arrPwd[p.HASH_PBKDF2_INDEX]
-		storePw, _ 		:= base64.StdEncoding.DecodeString(base64Pw)
+		storePw, err 		:= base64.StdEncoding.DecodeString(base64Pw)
+		if err != nil{
+			return false, err
+		}
+
 		size			:= len(storePw)
-		return p.checkPasswordDBKDF2(password, storePw, salt, iter, size, algo)
+		ok, err := p.checkPasswordDBKDF2(password, storePw, salt, iter, size, algo)
+		if err != nil{
+			return false, err
+		}
+		if ok {
+			return ok, nil
+		}
 	}
-	return false
+	return false, fmt.Errorf("Password format invalid")
 }
 
 func (p PydioPW)CreateHash(password string) (base64Pw string){
@@ -76,6 +93,8 @@ func (p PydioPW)CreateHash(password string) (base64Pw string){
 	return strings.ToLower(p.PBKDF2_HASH_ALGORITHM) + ":" + strconv.Itoa(p.PBKDF2_ITERATIONS) + ":" + base64.StdEncoding.EncodeToString(salt) + ":" + base64.StdEncoding.EncodeToString(hashedPw)
 }
 
+// TODO
+// Use stronger random []byte
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 func randStringBytes(n int) []byte {
 	rand.Seed(time.Now().UTC().UnixNano())

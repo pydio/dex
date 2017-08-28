@@ -17,8 +17,12 @@ func TestCheckPasswordPydio(t *testing.T){
 		HASH_PBKDF2_INDEX 		: 3,
 	}
 
-	if !passworder.CheckDBKDF2PydioPwd("P@ssw0rd", testPw){
+	ok, err := passworder.CheckDBKDF2PydioPwd("P@ssw0rd", testPw)
+	if err != nil {
 		t.Errorf("Check pydio password failed")
+	}
+	if !ok {
+		t.Errorf("Passwoord check failed")
 	}
 }
 
@@ -35,7 +39,12 @@ func TestCheckPasswordMd5(t *testing.T){
 		HASH_PBKDF2_INDEX 		: 3,
 	}
 
-	if !passworder.CheckDBKDF2PydioPwd("pbkdf2", md5pw){
+	ok, err := passworder.CheckDBKDF2PydioPwd("pbkdf2", md5pw)
+	if err != nil{
+		t.Errorf("Check md5 pw failed")
+	}
+
+	if !ok {
 		t.Errorf("Check md5 pw failed")
 	}
 }
