@@ -11,6 +11,8 @@ import (
 	"encoding/base64"
 	"math/rand"
 	"strconv"
+	"time"
+	"encoding/hex"
 )
 
 type PydioPW struct {
@@ -29,6 +31,7 @@ func (p PydioPW)pbkdf2CreateHash(password []byte, salt []byte, iter, totalSize i
 	switch strings.ToLower(algo) {
 	case "sha256":
 		key := pbkdf2.Key(password, salt, iter, totalSize, sha256.New)
+
 		return key, nil
 	case "sha1":
 		key := pbkdf2.Key(password, salt, iter, totalSize, sha1.New)
@@ -40,39 +43,28 @@ func (p PydioPW)pbkdf2CreateHash(password []byte, salt []byte, iter, totalSize i
 func (p PydioPW)checkPasswordMD5(password string, storePassword string) bool{
 	hasher := md5.New()
 	hasher.Write([]byte(password))
-	return bytes.Equal(hasher.Sum(nil), []byte(storePassword))
+	return strings.Compare(hex.EncodeToString(hasher.Sum(nil)), storePassword) == 0
 }
 
 func (p PydioPW)checkPasswordDBKDF2(password string, storePassword []byte, salt []byte, iter, totalSize int, algo string) bool {
 	pwd, _ := p.pbkdf2CreateHash([]byte(password), salt, iter, totalSize, algo)
-
-	fmt.Printf("salt   pw: %v", []byte(salt))
-	fmt.Println("")
-	fmt.Printf("Calcul pw: %v", []byte(pwd))
-	fmt.Println("")
-	fmt.Printf("Store_ Pw: %v", storePassword)
-	fmt.Println("")
-
 	return bytes.Equal(pwd, storePassword)
 }
 
-func (p PydioPW)CheckDBKDF2PydioPwd(password string, pwdString string) bool {
-	arrPwd := strings.Split(pwdString, ":")
+func (p PydioPW)CheckDBKDF2PydioPwd(password string, hashedPw string) bool {
+	arrPwd := strings.Split(hashedPw, ":")
 	if len(arrPwd) < p.HASH_SECTIONS {
 		// MD5 password
-		return p.checkPasswordMD5(password, pwdString)
+		return p.checkPasswordMD5(password, hashedPw)
 	}
 	if len(arrPwd) == p.HASH_SECTIONS{
-		var base64Salt string
-		base64Salt = arrPwd[p.HASH_SALT_INDEX]
-		salt, _ := base64.StdEncoding.DecodeString(base64Salt)
-		iter, _ 	:= strconv.Atoi(arrPwd[p.HASH_ITERATION_INDEX])
-		size	:= p.PBKDF2_HASH_BYTE_SIZE
-		algo	:= arrPwd[p.HASH_ALGORITHM_INDEX]
-
-		base64Pw := arrPwd[p.HASH_PBKDF2_INDEX]
-		storePw, _ := base64.StdEncoding.DecodeString(base64Pw)
-
+		base64Salt 		:= arrPwd[p.HASH_SALT_INDEX]
+		salt	 		:= []byte(base64Salt)
+		iter, _ 		:= strconv.Atoi(arrPwd[p.HASH_ITERATION_INDEX])
+		algo			:= arrPwd[p.HASH_ALGORITHM_INDEX]
+		base64Pw 		:= arrPwd[p.HASH_PBKDF2_INDEX]
+		storePw, _ 		:= base64.StdEncoding.DecodeString(base64Pw)
+		size			:= len(storePw)
 		return p.checkPasswordDBKDF2(password, storePw, salt, iter, size, algo)
 	}
 	return false
@@ -86,6 +78,7 @@ func (p PydioPW)CreateHash(password string) (base64Pw string){
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 func randStringBytes(n int) []byte {
+	rand.Seed(time.Now().UTC().UnixNano())
 	b := make([]byte, n)
 	for i := range b {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
