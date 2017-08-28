@@ -187,6 +187,15 @@ connectors:
       id: 0
       islast: true
       config:
+       SqlConnection:
+        Host: 127.0.0.1
+        DBName: py8dev
+        UserName: pydio
+        Password: pydiopsss
+       UserTableName: ajxp_users
+       UserIDColumn: login
+       PasswordColumn: password
+       PasswordEncryptAlgo:
 
 
 # - type: oidc
