@@ -7,7 +7,7 @@ import (
 type PydioClaims struct {
 	AuthSource		string
 	DisplayName 	string
-	Roles			string
+	Roles			[]string
 	GroupPath		string
 }
 

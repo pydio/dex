@@ -151,7 +151,7 @@ type Claims struct {
 	//Uuid 			string
 	AuthSource		string
 	DisplayName 	string
-	Roles			string
+	Roles			[]string
 	GroupPath		string
 }
 

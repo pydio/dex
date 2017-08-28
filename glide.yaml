@@ -146,4 +146,4 @@ import:
 
 # PYDIO lib
 - package: github.com/pydio/poc
-  version: 9f3f6fa7bea3b674f2164bdabded5881fdb3d45d
+  version: 728648c8a197e6c898040e22ebb29162b6d7adc6
