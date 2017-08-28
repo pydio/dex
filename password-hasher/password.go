@@ -1,4 +1,4 @@
-package password_encoder
+package password_hasher
 
 import (
 	"golang.org/x/crypto/pbkdf2"

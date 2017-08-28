@@ -1,4 +1,4 @@
-package password_encoder
+package password_hasher
 
 import (
 	"testing"
