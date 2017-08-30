@@ -38,9 +38,11 @@ func (c *conn) migrate() (int, error) {
 
 			migrationNum := n + 1
 			m := migrations[n]
+
 			if _, err := tx.Exec(m.stmt); err != nil {
-				return fmt.Errorf("migration %d failed: %v", migrationNum, err)
+					return fmt.Errorf("migration %d failed: %v", migrationNum, err)
 			}
+
 
 			q := `insert into migrations (num, at) values ($1, now());`
 			if _, err := tx.Exec(q, migrationNum); err != nil {
@@ -72,8 +74,8 @@ var migrations = []migration{
 			create table client (
 				id text not null primary key,
 				secret text not null,
-				redirect_uris bytea not null, -- JSON array of strings
-				trusted_peers bytea not null, -- JSON array of strings
+				redirect_uris bytea not null, 
+				trusted_peers bytea not null, 
 				public boolean not null,
 				name text not null,
 				logo_url text not null
@@ -82,58 +84,61 @@ var migrations = []migration{
 			create table auth_request (
 				id text not null primary key,
 				client_id text not null,
-				response_types bytea not null, -- JSON array of strings
-				scopes bytea not null,         -- JSON array of strings
+				response_types bytea not null, 
+				scopes bytea not null,         
 				redirect_uri text not null,
 				nonce text not null,
 				state text not null,
 				force_approval_prompt boolean not null,
-		
+
 				logged_in boolean not null,
-		
+
 				claims_user_id text not null,
 				claims_username text not null,
 				claims_email text not null,
 				claims_email_verified boolean not null,
-				claims_groups bytea not null, -- JSON array of strings
-		
+				claims_groups bytea not null,
+				claims_pydio bytea,					-- JSON object
+
 				connector_id text not null,
 				connector_data bytea,
-		
+
 				expiry timestamptz not null
 			);
 		
 			create table auth_code (
 				id text not null primary key,
 				client_id text not null,
-				scopes bytea not null, -- JSON array of strings
+				scopes bytea not null, 
 				nonce text not null,
 				redirect_uri text not null,
-		
+
 				claims_user_id text not null,
 				claims_username text not null,
 				claims_email text not null,
 				claims_email_verified boolean not null,
-				claims_groups bytea not null, -- JSON array of strings
-		
+				claims_groups bytea not null,
+				claims_pydio bytea,					-- JSON object
+
 				connector_id text not null,
 				connector_data bytea,
-		
+
 				expiry timestamptz not null
 			);
 		
 			create table refresh_token (
 				id text not null primary key,
 				client_id text not null,
-				scopes bytea not null, -- JSON array of strings
+				scopes bytea not null, 
 				nonce text not null,
-		
+
 				claims_user_id text not null,
 				claims_username text not null,
 				claims_email text not null,
 				claims_email_verified boolean not null,
-				claims_groups bytea not null, -- JSON array of strings
-		
+				claims_groups bytea not null,
+				claims_pydio bytea,					-- JSON object
+
 				connector_id text not null,
 				connector_data bytea
 			);
@@ -144,8 +149,7 @@ var migrations = []migration{
 				username text not null,
 				user_id text not null
 			);
-		
-			-- keys is a weird table because we only ever expect there to be a single row
+
 			create table keys (
 				id text not null primary key,
 				verification_keys bytea not null, -- JSON array

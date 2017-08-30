@@ -239,7 +239,7 @@ func (a *app) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authCodeURL := ""
-	scopes = append(scopes, "openid", "profile", "email")
+	scopes = append(scopes, "openid", "profile", "email", "pydio")
 	if r.FormValue("offline_access") != "yes" {
 		authCodeURL = a.oauth2Config(scopes).AuthCodeURL(exampleAppState)
 	} else if a.offlineAsScope {
@@ -293,6 +293,9 @@ func (a *app) handleCallback(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("method not implemented: %s", r.Method), http.StatusBadRequest)
 		return
 	}
+
+	fmt.Printf("Token: ", token)
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to get token: %v", err), http.StatusInternalServerError)

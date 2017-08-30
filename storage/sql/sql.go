@@ -13,6 +13,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"fmt"
 )
 
 // flavor represents a specific SQL implementation, and is used to translate query strings
@@ -90,13 +91,57 @@ var (
 			// SQLite doesn't have a "now()" method, replace with "date('now')"
 			{regexp.MustCompile(`\bnow\(\)`), "date('now')"},
 		},
+
 	}
 
 	// Incomplete.
 	flavorMySQL = flavor{
 		queryReplacers: []replacer{
 			{bindRegexp, "?"},
+			{matchLiteral("timestamptz"), "datetime(6)"},
+			{matchLiteral("bytea"), "blob"},
+			{matchLiteral("text"), "varchar(555)"},
+			{matchLiteral("keys"), "tb_keys"},
+			//{regexp.MustCompile(`\b(keys)\b`), "`$1`"},
+			// Change default timestamp to fit datetime.
+			{regexp.MustCompile(`0001-01-01 00:00:00 UTC`), "1000-01-01 00:00:00"},
 		},
+
+		executeTx: func(db *sql.DB, fn func(sqlTx *sql.Tx) error) error {
+			/*
+			if _, err := db.Exec(`SET GLOBAL connect_timeout=100;;`); err != nil {
+				return err
+			}
+
+			tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
+				Isolation: sql.LevelSerializable,
+			})*/
+			/**/
+
+			tx , err := db.Begin()
+			if err != nil {
+				return err
+			}
+
+			defer tx.Rollback()
+
+			//fmt.Println("Wait forrrrrr")
+			/*
+			if _, err := tx.Exec(`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;`); err != nil {
+				return err
+			}
+			*/
+
+			if err := fn(tx); err != nil {
+				//Error: 1213 SQLSTATE: 40001 (ER_LOCK_DEADLOCK)
+				//Message: Deadlock found when trying to get lock; try restarting transaction
+				fmt.Println(err.Error())
+				return err
+			}
+
+			return tx.Commit()
+		},
+		supportsTimezones: true,
 	}
 
 	// Not tested.
@@ -145,6 +190,7 @@ func (c *conn) Close() error {
 
 func (c *conn) Exec(query string, args ...interface{}) (sql.Result, error) {
 	query = c.flavor.translate(query)
+	//fmt.Println(query)
 	return c.db.Exec(query, c.translateArgs(args)...)
 }
 

@@ -125,6 +125,8 @@ type Config struct {
 		// The attribute of the group that represents its name.
 		NameAttr string `json:"nameAttr"`
 	} `json:"groupSearch"`
+
+
 }
 
 func scopeString(i int) string {
@@ -245,6 +247,7 @@ type ldapConnector struct {
 var (
 	_ connector.PasswordConnector = (*ldapConnector)(nil)
 	_ connector.RefreshConnector  = (*ldapConnector)(nil)
+
 )
 
 // do initializes a connection to the LDAP directory and passes it to the

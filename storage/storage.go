@@ -7,7 +7,6 @@ import (
 	"io"
 	"strings"
 	"time"
-
 	jose "gopkg.in/square/go-jose.v2"
 )
 
@@ -52,6 +51,7 @@ type Storage interface {
 	CreateAuthCode(c AuthCode) error
 	CreateRefresh(r RefreshToken) error
 	CreatePassword(p Password) error
+	//CreatePydioUser(p PydioUser) error
 	CreateOfflineSessions(s OfflineSessions) error
 	CreateConnector(c Connector) error
 
@@ -63,12 +63,14 @@ type Storage interface {
 	GetKeys() (Keys, error)
 	GetRefresh(id string) (RefreshToken, error)
 	GetPassword(email string) (Password, error)
+	//GetPydioUser(login string) (PydioUser, error)
 	GetOfflineSessions(userID string, connID string) (OfflineSessions, error)
 	GetConnector(id string) (Connector, error)
 
 	ListClients() ([]Client, error)
 	ListRefreshTokens() ([]RefreshToken, error)
 	ListPasswords() ([]Password, error)
+	//ListPydioUsers() ([]PydioUser, error)
 	ListConnectors() ([]Connector, error)
 
 	// Delete methods MUST be atomic.
@@ -77,6 +79,7 @@ type Storage interface {
 	DeleteClient(id string) error
 	DeleteRefresh(id string) error
 	DeletePassword(email string) error
+	//DeletePydioUser(login string) error
 	DeleteOfflineSessions(userID string, connID string) error
 	DeleteConnector(id string) error
 
@@ -99,6 +102,7 @@ type Storage interface {
 	UpdateAuthRequest(id string, updater func(a AuthRequest) (AuthRequest, error)) error
 	UpdateRefreshToken(id string, updater func(r RefreshToken) (RefreshToken, error)) error
 	UpdatePassword(email string, updater func(p Password) (Password, error)) error
+	//UpdatePydioUser(login string, updater func(p PydioUser) (PydioUser, error)) error
 	UpdateOfflineSessions(userID string, connID string, updater func(s OfflineSessions) (OfflineSessions, error)) error
 	UpdateConnector(id string, updater func(c Connector) (Connector, error)) error
 
@@ -143,6 +147,12 @@ type Claims struct {
 	EmailVerified bool
 
 	Groups []string
+
+	//Uuid 			string
+	AuthSource		string
+	DisplayName 	string
+	Roles			[]string
+	GroupPath		string
 }
 
 // AuthRequest represents a OAuth2 client authorization request. It holds the state
@@ -177,6 +187,9 @@ type AuthRequest struct {
 	// The identity of the end user. Generally nil until the user authenticates
 	// with a backend.
 	Claims Claims
+
+	// Additional claims for Pydio
+	PClaims PydioClaims
 
 	// The connector used to login the user and any data the connector wishes to persists.
 	// Set when the user authenticates.
@@ -215,6 +228,8 @@ type AuthCode struct {
 	ConnectorID   string
 	ConnectorData []byte
 	Claims        Claims
+	// Additional claims for Pydio
+	PClaims PydioClaims
 
 	Expiry time.Time
 }
@@ -239,6 +254,8 @@ type RefreshToken struct {
 	ConnectorID   string
 	ConnectorData []byte
 	Claims        Claims
+	// Additional claims for Pydio
+	PClaims PydioClaims
 
 	// Scopes present in the initial request. Refresh requests may specify a set
 	// of scopes different from the initial request when refreshing a token,

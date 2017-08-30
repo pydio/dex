@@ -109,18 +109,18 @@ func (c *conn) CreateAuthRequest(a storage.AuthRequest) error {
 			id, client_id, response_types, scopes, redirect_uri, nonce, state,
 			force_approval_prompt, logged_in,
 			claims_user_id, claims_username, claims_email, claims_email_verified,
-			claims_groups,
+			claims_groups, claims_pydio,
 			connector_id, connector_data,
 			expiry
 		)
 		values (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
 		);
 	`,
 		a.ID, a.ClientID, encoder(a.ResponseTypes), encoder(a.Scopes), a.RedirectURI, a.Nonce, a.State,
 		a.ForceApprovalPrompt, a.LoggedIn,
 		a.Claims.UserID, a.Claims.Username, a.Claims.Email, a.Claims.EmailVerified,
-		encoder(a.Claims.Groups),
+		encoder(a.Claims.Groups), a.PClaims.JsonMarshal(),
 		a.ConnectorID, a.ConnectorData,
 		a.Expiry,
 	)
@@ -141,6 +141,14 @@ func (c *conn) UpdateAuthRequest(id string, updater func(a storage.AuthRequest) 
 		}
 
 		a, err := updater(r)
+		fmt.Printf("UPDATE claims: %v", a.Claims)
+		fmt.Println("")
+		fmt.Printf("UPDATE pclaims: %v", a.PClaims)
+		fmt.Println("")
+		fmt.Printf("UPDATE pclaims string: %s", a.PClaims.JsonMarshal())
+		fmt.Println("")
+
+
 		if err != nil {
 			return err
 		}
@@ -151,15 +159,15 @@ func (c *conn) UpdateAuthRequest(id string, updater func(a storage.AuthRequest) 
 				nonce = $5, state = $6, force_approval_prompt = $7, logged_in = $8,
 				claims_user_id = $9, claims_username = $10, claims_email = $11,
 				claims_email_verified = $12,
-				claims_groups = $13,
-				connector_id = $14, connector_data = $15,
-				expiry = $16
-			where id = $17;
+				claims_groups = $13, claims_pydio = $14,
+				connector_id = $15, connector_data = $16,
+				expiry = $17
+			where id = $18;
 		`,
 			a.ClientID, encoder(a.ResponseTypes), encoder(a.Scopes), a.RedirectURI, a.Nonce, a.State,
 			a.ForceApprovalPrompt, a.LoggedIn,
 			a.Claims.UserID, a.Claims.Username, a.Claims.Email, a.Claims.EmailVerified,
-			encoder(a.Claims.Groups),
+			encoder(a.Claims.Groups), a.PClaims.JsonMarshal(),
 			a.ConnectorID, a.ConnectorData,
 			a.Expiry, r.ID,
 		)
@@ -176,19 +184,20 @@ func (c *conn) GetAuthRequest(id string) (storage.AuthRequest, error) {
 }
 
 func getAuthRequest(q querier, id string) (a storage.AuthRequest, err error) {
+	pydioClaims := ""
 	err = q.QueryRow(`
 		select 
 			id, client_id, response_types, scopes, redirect_uri, nonce, state,
 			force_approval_prompt, logged_in,
 			claims_user_id, claims_username, claims_email, claims_email_verified,
-			claims_groups,
+			claims_groups, claims_pydio,
 			connector_id, connector_data, expiry
 		from auth_request where id = $1;
 	`, id).Scan(
 		&a.ID, &a.ClientID, decoder(&a.ResponseTypes), decoder(&a.Scopes), &a.RedirectURI, &a.Nonce, &a.State,
 		&a.ForceApprovalPrompt, &a.LoggedIn,
 		&a.Claims.UserID, &a.Claims.Username, &a.Claims.Email, &a.Claims.EmailVerified,
-		decoder(&a.Claims.Groups),
+		decoder(&a.Claims.Groups), &pydioClaims,
 		&a.ConnectorID, &a.ConnectorData, &a.Expiry,
 	)
 	if err != nil {
@@ -197,6 +206,8 @@ func getAuthRequest(q querier, id string) (a storage.AuthRequest, err error) {
 		}
 		return a, fmt.Errorf("select auth request: %v", err)
 	}
+	a.PClaims.JsonUnMarshal(pydioClaims)
+	fmt.Printf("Authrequest Geet: %v", a.PClaims)
 	return a, nil
 }
 
@@ -205,38 +216,40 @@ func (c *conn) CreateAuthCode(a storage.AuthCode) error {
 		insert into auth_code (
 			id, client_id, scopes, nonce, redirect_uri,
 			claims_user_id, claims_username,
-			claims_email, claims_email_verified, claims_groups,
+			claims_email, claims_email_verified, claims_groups, claims_pydio,
 			connector_id, connector_data,
 			expiry
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
 	`,
 		a.ID, a.ClientID, encoder(a.Scopes), a.Nonce, a.RedirectURI, a.Claims.UserID,
-		a.Claims.Username, a.Claims.Email, a.Claims.EmailVerified, encoder(a.Claims.Groups),
+		a.Claims.Username, a.Claims.Email, a.Claims.EmailVerified, encoder(a.Claims.Groups), a.PClaims.JsonMarshal(),
 		a.ConnectorID, a.ConnectorData, a.Expiry,
 	)
 
 	if err != nil {
 		if c.alreadyExistsCheck(err) {
-			return storage.ErrAlreadyExists
+			//return storage.ErrAlreadyExists
+			return fmt.Errorf("insert auth code: %v : %v", err , a.ID )
 		}
-		return fmt.Errorf("insert auth code: %v", err)
+		return fmt.Errorf("insert auth code: %v : %v", err , a.ID )
 	}
 	return nil
 }
 
 func (c *conn) GetAuthCode(id string) (a storage.AuthCode, err error) {
+	pydioClaims := ""
 	err = c.QueryRow(`
 		select
 			id, client_id, scopes, nonce, redirect_uri,
 			claims_user_id, claims_username,
-			claims_email, claims_email_verified, claims_groups,
+			claims_email, claims_email_verified, claims_groups, claims_pydio,
 			connector_id, connector_data,
 			expiry
 		from auth_code where id = $1;
 	`, id).Scan(
 		&a.ID, &a.ClientID, decoder(&a.Scopes), &a.Nonce, &a.RedirectURI, &a.Claims.UserID,
-		&a.Claims.Username, &a.Claims.Email, &a.Claims.EmailVerified, decoder(&a.Claims.Groups),
+		&a.Claims.Username, &a.Claims.Email, &a.Claims.EmailVerified, decoder(&a.Claims.Groups), &pydioClaims,
 		&a.ConnectorID, &a.ConnectorData, &a.Expiry,
 	)
 	if err != nil {
@@ -245,6 +258,8 @@ func (c *conn) GetAuthCode(id string) (a storage.AuthCode, err error) {
 		}
 		return a, fmt.Errorf("select auth code: %v", err)
 	}
+	a.PClaims.JsonUnMarshal(pydioClaims)
+	//fmt.Printf("GetAuthCode: %v", a.PClaims)
 	return a, nil
 }
 
@@ -253,15 +268,15 @@ func (c *conn) CreateRefresh(r storage.RefreshToken) error {
 		insert into refresh_token (
 			id, client_id, scopes, nonce,
 			claims_user_id, claims_username, claims_email, claims_email_verified,
-			claims_groups,
+			claims_groups, claims_pydio,
 			connector_id, connector_data,
 			token, created_at, last_used
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);
 	`,
 		r.ID, r.ClientID, encoder(r.Scopes), r.Nonce,
 		r.Claims.UserID, r.Claims.Username, r.Claims.Email, r.Claims.EmailVerified,
-		encoder(r.Claims.Groups),
+		encoder(r.Claims.Groups), r.PClaims.JsonMarshal(),
 		r.ConnectorID, r.ConnectorData,
 		r.Token, r.CreatedAt, r.LastUsed,
 	)
@@ -294,17 +309,18 @@ func (c *conn) UpdateRefreshToken(id string, updater func(old storage.RefreshTok
 				claims_email = $6,
 				claims_email_verified = $7,
 				claims_groups = $8,
-				connector_id = $9,
-				connector_data = $10,
-				token = $11,
-				created_at = $12,
-				last_used = $13
+				claims_pydio = $9,
+				connector_id = $10,
+				connector_data = $11,
+				token = $12,
+				created_at = $13,
+				last_used = $14
 			where
 				id = $14
 		`,
 			r.ClientID, encoder(r.Scopes), r.Nonce,
 			r.Claims.UserID, r.Claims.Username, r.Claims.Email, r.Claims.EmailVerified,
-			encoder(r.Claims.Groups),
+			encoder(r.Claims.Groups), r.PClaims.JsonMarshal(),
 			r.ConnectorID, r.ConnectorData,
 			r.Token, r.CreatedAt, r.LastUsed, id,
 		)
@@ -324,7 +340,7 @@ func getRefresh(q querier, id string) (storage.RefreshToken, error) {
 		select
 			id, client_id, scopes, nonce,
 			claims_user_id, claims_username, claims_email, claims_email_verified,
-			claims_groups,
+			claims_groups, claims_pydio,
 			connector_id, connector_data,
 			token, created_at, last_used
 		from refresh_token where id = $1;
@@ -336,7 +352,7 @@ func (c *conn) ListRefreshTokens() ([]storage.RefreshToken, error) {
 		select
 			id, client_id, scopes, nonce,
 			claims_user_id, claims_username, claims_email, claims_email_verified,
-			claims_groups,
+			claims_groups, claims_pydio,
 			connector_id, connector_data,
 			token, created_at, last_used
 		from refresh_token;
@@ -359,10 +375,11 @@ func (c *conn) ListRefreshTokens() ([]storage.RefreshToken, error) {
 }
 
 func scanRefresh(s scanner) (r storage.RefreshToken, err error) {
+	pydioClaim := ""
 	err = s.Scan(
 		&r.ID, &r.ClientID, decoder(&r.Scopes), &r.Nonce,
 		&r.Claims.UserID, &r.Claims.Username, &r.Claims.Email, &r.Claims.EmailVerified,
-		decoder(&r.Claims.Groups),
+		decoder(&r.Claims.Groups), &pydioClaim,
 		&r.ConnectorID, &r.ConnectorData,
 		&r.Token, &r.CreatedAt, &r.LastUsed,
 	)
@@ -372,6 +389,7 @@ func scanRefresh(s scanner) (r storage.RefreshToken, err error) {
 		}
 		return r, fmt.Errorf("scan refresh_token: %v", err)
 	}
+	//r.PClaims.JsonUnMarshal(pydioClaim)
 	return r, nil
 }
 
@@ -548,6 +566,8 @@ func scanClient(s scanner) (cli storage.Client, err error) {
 	}
 	return cli, nil
 }
+
+
 
 func (c *conn) CreatePassword(p storage.Password) error {
 	p.Email = strings.ToLower(p.Email)
@@ -821,6 +841,9 @@ func (c *conn) DeleteClient(id string) error      { return c.delete("client", "i
 func (c *conn) DeleteRefresh(id string) error     { return c.delete("refresh_token", "id", id) }
 func (c *conn) DeletePassword(email string) error {
 	return c.delete("password", "email", strings.ToLower(email))
+}
+func (c *conn) DeletePydioUser(login string) error {
+	return c.delete("ajxp_users", "login", strings.ToLower(login))
 }
 func (c *conn) DeleteConnector(id string) error { return c.delete("connector", "id", id) }
 

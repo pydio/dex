@@ -7,11 +7,21 @@ issuer: http://127.0.0.1:5556/dex
 # options include SQL flavors and Kubernetes third party resources.
 #
 # See the storage document at Documentation/storage.md for further information.
-storage:
-  type: sqlite3
-  config:
-    file: examples/dex.db
 
+#storage:
+#  type: sqlite3
+#  config:
+#    file: examples/2dex.db
+
+storage:
+ type: mysql
+ config:
+   Database: py8dev
+   User: pydio
+   Password: pydiopsss
+   Host:  127.0.0.1
+   #Port:  '3306'
+   Protocol: tcp
 # Configuration for the HTTP endpoints.
 web:
   http: 0.0.0.0:5556
@@ -34,15 +44,15 @@ web:
 #   idTokens: "24h"
 
 # Options for controlling the logger.
-# logger:
-#   level: "debug"
-#   format: "text" # can also be "json"
+logger:
+  level: "debug"
+  format: "text" # can also be "json"
 
 # Uncomment this block to control which response types dex supports. For example
 # the following response types enable the implicit flow for web-only clients.
 # Defaults to ["code"], the code flow.
-# oauth2:
-#   responseTypes: ["code", "token", "id_token"]
+oauth2:
+  responseTypes: ["code", "token", "id_token"]
 
 # Instead of reading from an external storage, use this list of clients.
 #
@@ -55,9 +65,139 @@ staticClients:
   secret: ZXhhbXBsZS1hcHAtc2VjcmV0
 
 connectors:
-- type: mockCallback
-  id: mock
-  name: Example
+- type: pydio
+  id: pydio
+  name: Pydio aggregate Connector
+  config:
+   pydioconnectors:
+    - type: pydio-ldap
+      name: openldap
+      id: 5
+      islast: true
+      config:
+        DomainName: "vpydio.fr"
+        Host: 192.168.0.8:389
+        Connection: normal
+        SkipVerifyCertificate: True
+        #RootCA: ""
+        #RootCAData: ""
+        BindDN: ""
+        BindPW: ""
+        User:
+          Dns:
+          - ou=people,dc=vpydio,dc=fr
+          - ou=visitor,dc=vpydio,dc=fr
+          Filter: (objectClass=eduPerson)
+          IDAttribute: uid
+          Scope: "sub"
+        Group:
+          Dns:
+          - ou=groups,dc=vpydio,dc=fr
+          Filter: (objectClass=groupOfNames)
+          IDAttribute: uid
+          DisplayAttribute: cn
+          Scope: "sub"
+        PageSize: 500
+        SupportNestedGroup: false
+        ActivePydioMemberOf: false
+        UserAttributeMeaningMemberOf: memberOf
+        GroupValueFormatInMemberOf: dn
+        GroupAttributeMeaningMember: member
+        GroupAttributeMemberValueFormat: dn
+        MappingRules:
+          Rules:
+          - RuleName: rule01
+            LeftAttribute: DisplayName
+            RightAttribute: displayName
+            RuleString: ""
+          - RuleName: rule02
+            LeftAttribute: Roles
+            RightAttribute: eduPersonAffiliation
+            RuleString: ""
+            RolePrefix: "ldap_"
+          - RuleName: rule03
+            LeftAttribute: Roles
+            RightAttribute: memberOf
+            RuleString: ""
+            RolePrefix: "ldap_"
+          - RuleName: rule04
+            LeftAttribute: Email
+            RightAttribute: mail
+    - type: pydio-ldap
+      name: msad
+      id: 20
+      islast: true
+      config:
+        DomainName: "lab.py"
+        Host: 192.168.0.11:389
+        Connection: normal
+        SkipVerifyCertificate: True
+        #RootCA: ""
+        #RootCAData: ""
+        BindDN: "pydio@lab.py"
+        BindPW: "P@ssw0rd"
+        User:
+          Dns:
+          - ou=company,dc=lab,dc=py
+          Filter: (objectClass=user)
+          IDAttribute: sAMAccountName
+          Scope: "sub"
+        Group:
+          Dns:
+          - ou=company,dc=lab,dc=py
+          Filter: (objectClass=group)
+          IDAttribute: sAMAccountName
+          DisplayAttribute: displayName
+          Scope: "sub"
+        PageSize: 500
+        SupportNestedGroup: false
+        ActivePydioMemberOf: false
+        UserAttributeMeaningMemberOf: memberOf
+        GroupValueFormatInMemberOf: dn
+        GroupAttributeMeaningMember: member
+        GroupAttributeMemberValueFormat: dn
+        MappingRules:
+          Rules:
+          - RuleName: rule01
+            LeftAttribute: DisplayName
+            RightAttribute: displayName
+            RuleString: ""
+#          - RuleName: rule02
+#            LeftAttribute: Roles
+#            RightAttribute: eduPersonAffiliation
+#            RuleString: ""
+#            RolePrefix: "ldap_"
+          - RuleName: rule03
+            LeftAttribute: Roles
+            RightAttribute: memberOf
+            RuleString: ""
+            RolePrefix: "ldap_"
+          - RuleName: rule04
+            LeftAttribute: Email
+            RightAttribute: mail
+          - RuleName: rule05
+            LeftAttribute: "GroupPath"
+            RightAttribute: "ou"
+#    - type: pydio-sql
+#      name: externalDB
+#      id: 2
+#      config:
+    - type: pydio-sql
+      name: pydio-mysql-base
+      id: 0
+      islast: true
+      config:
+       SqlConnection:
+        Host: 127.0.0.1
+        DBName: py8dev
+        UserName: pydio
+        Password: pydiopsss
+       UserTableName: ajxp_users
+       UserIDColumn: login
+       PasswordColumn: password
+       PasswordEncryptAlgo:
+
+
 # - type: oidc
 #   id: google
 #   name: Google
@@ -71,15 +211,15 @@ connectors:
 #     - $GOOGLE_HOSTED_DOMAIN
 
 # Let dex keep a list of passwords which can be used to login to dex.
-enablePasswordDB: true
+# enablePasswordDB: true
 
 # A static list of passwords to login the end user. By identifying here, dex
 # won't look in its underlying storage for passwords.
 #
 # If this option isn't chosen users may be added through the gRPC API.
-staticPasswords:
-- email: "admin@example.com"
+#staticPasswords:
+#- email: "admin@example.com"
   # bcrypt hash of the string "password"
-  hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
-  username: "admin"
-  userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
+#  hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+#  username: "admin"
+#  userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
