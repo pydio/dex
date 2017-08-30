@@ -1,20 +1,18 @@
 package pydio_ldap
 
-
-import(
-	"testing"
-	"github.com/ghodss/yaml"
-	_ "github.com/Sirupsen/logrus"
-	_ "fmt"
-	_ "github.com/pydio/poc/lib-pydio-ldap"
-	_ "github.com/coreos/dex/connector"
+import (
 	"fmt"
+	_ "fmt"
+	_ "github.com/coreos/dex/connector"
+	"github.com/ghodss/yaml"
+	_ "github.com/pydio/poc/lib-pydio-ldap"
+	_ "github.com/sirupsen/logrus"
+	"testing"
 )
 
 var _ = yaml.YAMLToJSON
 
-
-func TestDNFormat(t *testing.T){
+func TestDNFormat(t *testing.T) {
 	rawData := []byte(`
         DomainName: "pydio.com"
         Host: 192.168.0.8:389

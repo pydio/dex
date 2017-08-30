@@ -16,9 +16,9 @@ issuer: http://127.0.0.1:5556/dex
 storage:
  type: mysql
  config:
-   Database: py8dev
-   User: pydio
-   Password: pydiopsss
+   Database: dex
+   User: root
+   Password:
    Host:  127.0.0.1
    #Port:  '3306'
    Protocol: tcp

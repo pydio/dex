@@ -403,12 +403,11 @@ func (s *Server) finalizeLogin(identity connector.Identity, authReq storage.Auth
 	}
 
 	pClaims := storage.PydioClaims{
-		AuthSource:    identity.AuthSource,
-		DisplayName:   identity.DisplayName,
-		Roles:         identity.Roles,
-		GroupPath:     identity.GroupPath,
+		AuthSource:  identity.AuthSource,
+		DisplayName: identity.DisplayName,
+		Roles:       identity.Roles,
+		GroupPath:   identity.GroupPath,
 	}
-
 
 	updater := func(a storage.AuthRequest) (storage.AuthRequest, error) {
 		a.LoggedIn = true
@@ -510,14 +509,14 @@ func (s *Server) sendCodeResponse(w http.ResponseWriter, r *http.Request, authRe
 		switch responseType {
 		case responseTypeCode:
 			code = storage.AuthCode{
-				ID:            storage.NewID(),
-				ClientID:      authReq.ClientID,
-				ConnectorID:   authReq.ConnectorID,
-				Nonce:         authReq.Nonce,
-				Scopes:        authReq.Scopes,
-				Claims:        authReq.Claims,
+				ID:          storage.NewID(),
+				ClientID:    authReq.ClientID,
+				ConnectorID: authReq.ConnectorID,
+				Nonce:       authReq.Nonce,
+				Scopes:      authReq.Scopes,
+				Claims:      authReq.Claims,
 				//Pydio
-				PClaims:	   authReq.PClaims,
+				PClaims: authReq.PClaims,
 				//=====
 				Expiry:        s.now().Add(time.Minute * 30),
 				RedirectURI:   authReq.RedirectURI,
@@ -715,14 +714,14 @@ func (s *Server) handleAuthCode(w http.ResponseWriter, r *http.Request, client s
 	var refreshToken string
 	if reqRefresh {
 		refresh := storage.RefreshToken{
-			ID:            storage.NewID(),
-			Token:         storage.NewID(),
-			ClientID:      authCode.ClientID,
-			ConnectorID:   authCode.ConnectorID,
-			Scopes:        authCode.Scopes,
-			Claims:        authCode.Claims,
+			ID:          storage.NewID(),
+			Token:       storage.NewID(),
+			ClientID:    authCode.ClientID,
+			ConnectorID: authCode.ConnectorID,
+			Scopes:      authCode.Scopes,
+			Claims:      authCode.Claims,
 			//Pydio
-			PClaims:		authCode.PClaims,
+			PClaims: authCode.PClaims,
 			//====
 			Nonce:         authCode.Nonce,
 			ConnectorData: authCode.ConnectorData,
@@ -869,20 +868,20 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 	requestScopes := parseScopes(scopes)
 	if requestScopes.Pydio {
 		claims.AuthSource = identity.AuthSource
-		claims.DisplayName    = identity.DisplayName
+		claims.DisplayName = identity.DisplayName
 		claims.Roles = identity.Roles
-		claims.GroupPath    = identity.GroupPath
+		claims.GroupPath = identity.GroupPath
 	}
 
 	accessToken := storage.NewID()
 
 	// fake authCode, because Grant Type does not authCode
 	authCode := storage.AuthCode{
-		ID:          "",
-		ClientID:    client.ID,
-		Claims:      claims,
-		Nonce:       nonce,
-		Scopes: 	 scopes,
+		ID:       "",
+		ClientID: client.ID,
+		Claims:   claims,
+		Nonce:    nonce,
+		Scopes:   scopes,
 
 		// TODO
 		ConnectorID: "pydio",

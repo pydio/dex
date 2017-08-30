@@ -107,7 +107,7 @@ const (
 	scopeGroups            = "groups"
 	scopeEmail             = "email"
 	scopeProfile           = "profile"
-	scopePydio          	= "pydio"
+	scopePydio             = "pydio"
 	scopeCrossClientPrefix = "audience:server:client_id:"
 )
 
@@ -120,7 +120,7 @@ const (
 	grantTypeRefreshToken      = "refresh_token"
 
 	// added for pydio
-	grantTypePassword		   = "password"
+	grantTypePassword = "password"
 )
 
 const (
@@ -128,7 +128,6 @@ const (
 	responseTypeToken   = "token"    // Implicit flow for frontend apps.
 	responseTypeIDToken = "id_token" // ID Token in url fragment
 )
-
 
 func parseScopes(scopes []string) connector.Scopes {
 	var s connector.Scopes
@@ -145,7 +144,7 @@ func parseScopes(scopes []string) connector.Scopes {
 		case scopeProfile:
 			s.Profile = true
 		case scopePydio:
-			s.Pydio	= true
+			s.Pydio = true
 		}
 	}
 	return s
@@ -261,10 +260,10 @@ type idTokenClaims struct {
 	Name string `json:"name,omitempty"`
 
 	// Pydio
-	AuthSource 			string `json:"authsource,omitempty"`
-	DisplayName 		string `json:"displayname,omitempty"`
-	Roles 				string `json:"roles,omitempty"`
-	GroupPath 			string `json:"grouppath,omitempty"`
+	AuthSource  string `json:"authsource,omitempty"`
+	DisplayName string `json:"displayname,omitempty"`
+	Roles       string `json:"roles,omitempty"`
+	GroupPath   string `json:"grouppath,omitempty"`
 }
 
 func (s *Server) newIDToken(clientID string, claims storage.Claims, scopes []string, nonce, accessToken, connID string) (idToken string, expiry time.Time, err error) {
@@ -329,9 +328,9 @@ func (s *Server) newIDToken(clientID string, claims storage.Claims, scopes []str
 			tok.Name = claims.Username
 		case scope == scopePydio:
 			tok.DisplayName = claims.DisplayName
-			tok.AuthSource  = claims.AuthSource
-			tok.GroupPath	= claims.GroupPath
-			tok.Roles		= claims.Roles
+			tok.AuthSource = claims.AuthSource
+			tok.GroupPath = claims.GroupPath
+			tok.Roles = strings.Join(claims.Roles, ",")
 		default:
 
 			peerID, ok := parseCrossClientScope(scope)

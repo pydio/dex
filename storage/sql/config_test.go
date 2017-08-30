@@ -65,10 +65,10 @@ func TestSQLite3(t *testing.T) {
 	withTimeout(time.Second*10, func() {
 		conformance.RunTests(t, newStorage)
 	})
-/*
-	withTimeout(time.Minute*1, func() {
-		conformance.RunTransactionTests(t, newStorage)
-	})
+	/*
+		withTimeout(time.Minute*1, func() {
+			conformance.RunTransactionTests(t, newStorage)
+		})
 	*/
 }
 
@@ -118,9 +118,9 @@ func TestPostgres(t *testing.T) {
 	})
 
 	/*
-	withTimeout(time.Minute*1, func() {
-		conformance.RunTransactionTests(t, newStorage)
-	})
+		withTimeout(time.Minute*1, func() {
+			conformance.RunTransactionTests(t, newStorage)
+		})
 	*/
 }
 
@@ -128,21 +128,21 @@ const testMysqlEnv = "DEX_MYSQL_HOST"
 
 func TestMySQL(t *testing.T) {
 	host := os.Getenv(testMysqlEnv)
-	if(host == ""){
+	if host == "" {
 		t.Skipf("test environement variable %q is not set, skipping", testMysqlEnv)
 	}
 	m := MySQL{
 		Database: getenv("DEX_MYSQL_DATABASE", "dex"),
-		User: getenv("DEX_MYSQL_USER", "dex"),
-		Password:getenv("DEX_MYSQL_PASSWORD", "dex"),
-		Host: host,
+		User:     getenv("DEX_MYSQL_USER", "dex"),
+		Password: getenv("DEX_MYSQL_PASSWORD", "dex"),
+		Host:     host,
 	}
-	fatal:= func(i interface{}) {
+	fatal := func(i interface{}) {
 		fmt.Fprintln(os.Stdout, i)
 		t.Fatal(i)
 	}
 
-	newStorage := func() storage.Storage{
+	newStorage := func() storage.Storage {
 		conn, err := m.open(logger)
 		if err != nil {
 			fatal(err)

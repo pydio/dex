@@ -18,11 +18,11 @@ type Scopes struct {
 	// The client has requested a refresh token from the server.
 	OfflineAccess bool
 	// The client has requested group information about the end user.
-	Groups 	bool
-	OpenID 	bool
+	Groups  bool
+	OpenID  bool
 	Profile bool
-	Email 	bool
-	Pydio	bool
+	Email   bool
+	Pydio   bool
 }
 
 // Identity represents the ID Token claims supported by the server.
@@ -38,10 +38,10 @@ type Identity struct {
 	// Additional claims for Pydio
 	// To be added
 	//Uuid 			string
-	AuthSource		string
-	DisplayName 	string
-	Roles			[]string
-	GroupPath		string
+	AuthSource  string
+	DisplayName string
+	Roles       []string
+	GroupPath   string
 
 	// ConnectorData holds data used by the connector for subsequent requests after initial
 	// authentication, such as access tokens for upstream provides.
@@ -108,9 +108,8 @@ type RefreshConnector interface {
 	Refresh(ctx context.Context, s Scopes, identity Identity) (Identity, error)
 }
 
-
 // Pydio
-func SetAttribute(i *Identity, attName string, attVal []string) (err error){
+func SetAttribute(i *Identity, attName string, attVal []string) (err error) {
 	if len(attVal) == 0 {
 		return nil
 	}
@@ -133,7 +132,7 @@ func SetAttribute(i *Identity, attName string, attVal []string) (err error){
 
 	case "Roles":
 		if len(attVal) > 0 {
-			for _, val := range attVal{
+			for _, val := range attVal {
 				i.Roles = append(i.Roles, strings.TrimSpace(val))
 			}
 		}
@@ -141,4 +140,3 @@ func SetAttribute(i *Identity, attName string, attVal []string) (err error){
 	}
 	return nil
 }
-

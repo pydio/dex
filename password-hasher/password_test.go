@@ -4,17 +4,17 @@ import (
 	"testing"
 )
 
-func TestCheckPasswordPydio(t *testing.T){
+func TestCheckPasswordPydio(t *testing.T) {
 	passworder := PydioPW{
-		PBKDF2_HASH_ALGORITHM:"sha256",
-		PBKDF2_ITERATIONS  		: 1000,
-		PBKDF2_SALT_BYTE_SIZE 	: 32,
-		PBKDF2_HASH_BYTE_SIZE 	: 24,
-		HASH_SECTIONS 			: 4,
-		HASH_ALGORITHM_INDEX 	: 0,
-		HASH_ITERATION_INDEX 	: 1,
-		HASH_SALT_INDEX 		: 2,
-		HASH_PBKDF2_INDEX 		: 3,
+		PBKDF2_HASH_ALGORITHM: "sha256",
+		PBKDF2_ITERATIONS:     1000,
+		PBKDF2_SALT_BYTE_SIZE: 32,
+		PBKDF2_HASH_BYTE_SIZE: 24,
+		HASH_SECTIONS:         4,
+		HASH_ALGORITHM_INDEX:  0,
+		HASH_ITERATION_INDEX:  1,
+		HASH_SALT_INDEX:       2,
+		HASH_PBKDF2_INDEX:     3,
 	}
 
 	ok, err := passworder.CheckDBKDF2PydioPwd("P@ssw0rd", testPw)
@@ -26,21 +26,21 @@ func TestCheckPasswordPydio(t *testing.T){
 	}
 }
 
-func TestCheckPasswordMd5(t *testing.T){
+func TestCheckPasswordMd5(t *testing.T) {
 	passworder := PydioPW{
-		PBKDF2_HASH_ALGORITHM:"sha256",
-		PBKDF2_ITERATIONS  		: 1000,
-		PBKDF2_SALT_BYTE_SIZE 	: 32,
-		PBKDF2_HASH_BYTE_SIZE 	: 24,
-		HASH_SECTIONS 			: 4,
-		HASH_ALGORITHM_INDEX 	: 0,
-		HASH_ITERATION_INDEX 	: 1,
-		HASH_SALT_INDEX 		: 2,
-		HASH_PBKDF2_INDEX 		: 3,
+		PBKDF2_HASH_ALGORITHM: "sha256",
+		PBKDF2_ITERATIONS:     1000,
+		PBKDF2_SALT_BYTE_SIZE: 32,
+		PBKDF2_HASH_BYTE_SIZE: 24,
+		HASH_SECTIONS:         4,
+		HASH_ALGORITHM_INDEX:  0,
+		HASH_ITERATION_INDEX:  1,
+		HASH_SALT_INDEX:       2,
+		HASH_PBKDF2_INDEX:     3,
 	}
 
 	ok, err := passworder.CheckDBKDF2PydioPwd("pbkdf2", md5pw)
-	if err != nil{
+	if err != nil {
 		t.Errorf("Check md5 pw failed")
 	}
 

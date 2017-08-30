@@ -5,40 +5,40 @@ import (
 )
 
 type PydioClaims struct {
-	AuthSource		string
-	DisplayName 	string
-	Roles			[]string
-	GroupPath		string
+	AuthSource  string
+	DisplayName string
+	Roles       []string
+	GroupPath   string
 }
 
-func (pc *PydioClaims) JsonMarshal() (string){
+func (pc *PydioClaims) JsonMarshal() string {
 	str, err := json.Marshal(pc)
-	if err != nil{
+	if err != nil {
 		return ""
 	}
 	return string(str)
 }
 
-func (pc *PydioClaims) JsonUnMarshal(str string) (err error){
+func (pc *PydioClaims) JsonUnMarshal(str string) (err error) {
 	err = json.Unmarshal([]byte(str), pc)
-	if err != nil{
-		return  err
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (pc *PydioClaims) GetFromClaims(claims *Claims) (error){
-	pc.AuthSource 		= claims.AuthSource
-	pc.DisplayName 		= claims.DisplayName
-	pc.Roles 			= claims.Roles
-	pc.GroupPath 		= claims.GroupPath
+func (pc *PydioClaims) GetFromClaims(claims *Claims) error {
+	pc.AuthSource = claims.AuthSource
+	pc.DisplayName = claims.DisplayName
+	pc.Roles = claims.Roles
+	pc.GroupPath = claims.GroupPath
 	return nil
 }
 
-func (pc *PydioClaims) SetToClaims(claims *Claims) (error){
-	claims.AuthSource			= pc.AuthSource
-	claims.DisplayName			= pc.DisplayName
-	claims.Roles				= pc.Roles
-	claims.GroupPath			= pc.GroupPath
+func (pc *PydioClaims) SetToClaims(claims *Claims) error {
+	claims.AuthSource = pc.AuthSource
+	claims.DisplayName = pc.DisplayName
+	claims.Roles = pc.Roles
+	claims.GroupPath = pc.GroupPath
 	return nil
 }

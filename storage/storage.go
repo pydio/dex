@@ -4,10 +4,10 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"errors"
+	jose "gopkg.in/square/go-jose.v2"
 	"io"
 	"strings"
 	"time"
-	jose "gopkg.in/square/go-jose.v2"
 )
 
 var (
@@ -149,10 +149,10 @@ type Claims struct {
 	Groups []string
 
 	//Uuid 			string
-	AuthSource		string
-	DisplayName 	string
-	Roles			[]string
-	GroupPath		string
+	AuthSource  string
+	DisplayName string
+	Roles       []string
+	GroupPath   string
 }
 
 // AuthRequest represents a OAuth2 client authorization request. It holds the state

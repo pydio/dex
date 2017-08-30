@@ -167,7 +167,7 @@ var scopeDescriptions = map[string]string{
 	"offline_access": "Have offline access",
 	"profile":        "View basic profile information",
 	"email":          "View your email",
-	"pydio":		  "View information for Pydio App",
+	"pydio":          "View information for Pydio App",
 }
 
 type connectorInfo struct {

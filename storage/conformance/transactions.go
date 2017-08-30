@@ -51,7 +51,6 @@ func testClientConcurrentUpdate(t *testing.T, s storage.Storage) {
 		return old, nil
 	})
 
-
 	if (err1 == nil) == (err2 == nil) {
 		t.Errorf("update client:\nupdate1: %v\nupdate2: %v\n", err1, err2)
 	}

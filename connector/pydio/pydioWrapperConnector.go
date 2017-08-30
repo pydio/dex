@@ -1,12 +1,12 @@
 package pydio
 
 import (
-	"github.com/coreos/dex/connector"
-	"github.com/Sirupsen/logrus"
 	"context"
+	"github.com/coreos/dex/connector"
+	"github.com/sirupsen/logrus"
 
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"github.com/coreos/dex/connector/pydio-ldap"
 	"github.com/coreos/dex/connector/pydio-sql"
 	"github.com/coreos/dex/connector/pydio-userapi"
@@ -18,10 +18,10 @@ type Config struct {
 }
 
 type ConnectorConfig struct {
-	Type   string `json:"type"`
-	ID     int16 `json:"id"`
-	Name   string `json:"name"`
-	IsLast bool  `json:islast`
+	Type   string          `json:"type"`
+	ID     int16           `json:"id"`
+	Name   string          `json:"name"`
+	IsLast bool            `json:islast`
 	Config json.RawMessage `json:"config"`
 }
 
@@ -125,10 +125,10 @@ func (p *pydioWrapperConnector) getConnectorList(logger logrus.FieldLogger) (con
 }
 
 type ConnectorList struct {
-	Type   string `json:"type"`
-	Name   string `json:"name"`
-	ID     int16 `json:"id"`
-	IsLast bool  `json:islast`
+	Type      string `json:"type"`
+	Name      string `json:"name"`
+	ID        int16  `json:"id"`
+	IsLast    bool   `json:islast`
 	Connector interface {
 		connector.Connector
 		connector.PasswordConnector
@@ -139,10 +139,10 @@ type ConnectorList struct {
 // Connector is a magical type that can unmarshal YAML dynamically. The
 // Type field determines the connector type, which is then customized for Config.
 type PydioConnector struct {
-	Type   string `json:"type"`
-	Name   string `json:"name"`
-	ID     int16 `json:"id"`
-	IsLast bool  `json:islast`
+	Type   string               `json:"type"`
+	Name   string               `json:"name"`
+	ID     int16                `json:"id"`
+	IsLast bool                 `json:islast`
 	Config PydioConnectorConfig `json:"config"`
 }
 

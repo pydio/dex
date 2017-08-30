@@ -10,10 +10,10 @@ import (
 	"github.com/sirupsen/logrus"
 
 	// import third party drivers
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
-	"fmt"
 )
 
 // flavor represents a specific SQL implementation, and is used to translate query strings
@@ -91,7 +91,6 @@ var (
 			// SQLite doesn't have a "now()" method, replace with "date('now')"
 			{regexp.MustCompile(`\bnow\(\)`), "date('now')"},
 		},
-
 	}
 
 	// Incomplete.
@@ -109,16 +108,16 @@ var (
 
 		executeTx: func(db *sql.DB, fn func(sqlTx *sql.Tx) error) error {
 			/*
-			if _, err := db.Exec(`SET GLOBAL connect_timeout=100;;`); err != nil {
-				return err
-			}
+				if _, err := db.Exec(`SET GLOBAL connect_timeout=100;;`); err != nil {
+					return err
+				}
 
-			tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
-				Isolation: sql.LevelSerializable,
-			})*/
+				tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
+					Isolation: sql.LevelSerializable,
+				})*/
 			/**/
 
-			tx , err := db.Begin()
+			tx, err := db.Begin()
 			if err != nil {
 				return err
 			}
@@ -127,9 +126,9 @@ var (
 
 			//fmt.Println("Wait forrrrrr")
 			/*
-			if _, err := tx.Exec(`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;`); err != nil {
-				return err
-			}
+				if _, err := tx.Exec(`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;`); err != nil {
+					return err
+				}
 			*/
 
 			if err := fn(tx); err != nil {

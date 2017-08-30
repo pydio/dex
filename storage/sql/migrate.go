@@ -40,9 +40,8 @@ func (c *conn) migrate() (int, error) {
 			m := migrations[n]
 
 			if _, err := tx.Exec(m.stmt); err != nil {
-					return fmt.Errorf("migration %d failed: %v", migrationNum, err)
+				return fmt.Errorf("migration %d failed: %v", migrationNum, err)
 			}
-
 
 			q := `insert into migrations (num, at) values ($1, now());`
 			if _, err := tx.Exec(q, migrationNum); err != nil {

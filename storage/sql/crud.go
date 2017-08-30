@@ -148,7 +148,6 @@ func (c *conn) UpdateAuthRequest(id string, updater func(a storage.AuthRequest) 
 		fmt.Printf("UPDATE pclaims string: %s", a.PClaims.JsonMarshal())
 		fmt.Println("")
 
-
 		if err != nil {
 			return err
 		}
@@ -230,9 +229,9 @@ func (c *conn) CreateAuthCode(a storage.AuthCode) error {
 	if err != nil {
 		if c.alreadyExistsCheck(err) {
 			//return storage.ErrAlreadyExists
-			return fmt.Errorf("insert auth code: %v : %v", err , a.ID )
+			return fmt.Errorf("insert auth code: %v : %v", err, a.ID)
 		}
-		return fmt.Errorf("insert auth code: %v : %v", err , a.ID )
+		return fmt.Errorf("insert auth code: %v : %v", err, a.ID)
 	}
 	return nil
 }
@@ -566,8 +565,6 @@ func scanClient(s scanner) (cli storage.Client, err error) {
 	}
 	return cli, nil
 }
-
-
 
 func (c *conn) CreatePassword(p storage.Password) error {
 	p.Email = strings.ToLower(p.Email)

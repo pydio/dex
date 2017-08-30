@@ -1,11 +1,11 @@
 package pydio_ldap
 
 import (
-	"github.com/coreos/dex/connector"
-	"github.com/Sirupsen/logrus"
-	"github.com/pydio/poc/lib-pydio-ldap"
-	"fmt"
 	"context"
+	"fmt"
+	"github.com/coreos/dex/connector"
+	"github.com/pydio/poc/lib-pydio-ldap"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/ldap.v2"
 	"strings"
 )
@@ -86,7 +86,7 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 
 	fullAttributeUser, err := server.GetUser(username, expected)
 
-	if err != nil || fullAttributeUser == nil{
+	if err != nil || fullAttributeUser == nil {
 		return connector.Identity{}, false, nil
 	}
 
@@ -100,10 +100,10 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 	}
 
 	isSetGroupPath := false
-	for _, rule := range defaultRules{
-		if rule.LeftAttribute == "GroupPath" && strings.ToLower(rule.RightAttribute) == "ou"{
+	for _, rule := range defaultRules {
+		if rule.LeftAttribute == "GroupPath" && strings.ToLower(rule.RightAttribute) == "ou" {
 			groupPath := server.GetOUStack(fullAttributeUser.DN)
-			groupPath = groupPath[:len(groupPath) - 1]
+			groupPath = groupPath[:len(groupPath)-1]
 			// TODO escape comma
 			ident.GroupPath = "/" + strings.Join(groupPath, "/")
 			isSetGroupPath = true
@@ -112,14 +112,14 @@ func (p *PydioLDAPConnector) Login(ctx context.Context, s connector.Scopes, user
 	}
 
 	if !isSetGroupPath {
-		if domainName, err := server.GetNamingContext(); err != nil{
+		if domainName, err := server.GetNamingContext(); err != nil {
 			replacer := strings.NewReplacer(",", ".")
 			ident.GroupPath = "/" + replacer.Replace(domainName)
 		}
 	}
 
 	allGroup := fullAttributeUser.GetAttributeValues("memberOf")
-	for _, group := range allGroup{
+	for _, group := range allGroup {
 		fmt.Println("Group: " + group)
 	}
 	ident.AuthSource = p.Config.DomainName
@@ -165,11 +165,11 @@ func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, id
 
 	fullAttributeUser, err := server.GetUser(ident.UserID, expected)
 
-	if err != nil{
+	if err != nil {
 		return connector.Identity{}, err
 	}
 
-	if fullAttributeUser == nil{
+	if fullAttributeUser == nil {
 		return connector.Identity{}, fmt.Errorf("User not found: userID: " + ident.UserID)
 	}
 	newIdent, err := p.MapUser(defaultRules, fullAttributeUser)
@@ -178,10 +178,10 @@ func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, id
 	}
 
 	isSetGroupPath := false
-	for _, rule := range defaultRules{
-		if rule.LeftAttribute == "GroupPath" && strings.ToLower(rule.RightAttribute) == "ou"{
+	for _, rule := range defaultRules {
+		if rule.LeftAttribute == "GroupPath" && strings.ToLower(rule.RightAttribute) == "ou" {
 			groupPath := server.GetOUStack(fullAttributeUser.DN)
-			groupPath = groupPath[:len(groupPath) - 1]
+			groupPath = groupPath[:len(groupPath)-1]
 			// TODO escape comma
 			newIdent.GroupPath = "/" + strings.Join(groupPath, "/")
 			isSetGroupPath = true
@@ -190,7 +190,7 @@ func (p *PydioLDAPConnector) Refresh(ctx context.Context, s connector.Scopes, id
 	}
 
 	if !isSetGroupPath {
-		if domainName, err := server.GetNamingContext(); err != nil{
+		if domainName, err := server.GetNamingContext(); err != nil {
 			replacer := strings.NewReplacer(",", ".")
 			newIdent.GroupPath = "/" + replacer.Replace(domainName)
 		}
@@ -205,7 +205,7 @@ func (p *PydioLDAPConnector) MapUser(ruleSet []lib_pydio_ldap.MappingRule, user 
 	//ident = connector.Identity{}
 	if len(ruleSet) > 0 {
 		for _, rule := range ruleSet {
-			if rule.LeftAttribute == "GroupPath"{
+			if rule.LeftAttribute == "GroupPath" {
 				continue
 			}
 			rightValues := user.GetAttributeValues(rule.RightAttribute)

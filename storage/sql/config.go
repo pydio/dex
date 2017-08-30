@@ -7,10 +7,10 @@ import (
 	"strconv"
 
 	"github.com/coreos/dex/storage"
+	"github.com/go-sql-driver/mysql"
 	"github.com/lib/pq"
 	sqlite3 "github.com/mattn/go-sqlite3"
 	"github.com/sirupsen/logrus"
-	"github.com/go-sql-driver/mysql"
 	"strings"
 )
 
@@ -154,19 +154,19 @@ func (p *Postgres) open(logger logrus.FieldLogger) (*conn, error) {
 
 // MySQL options for creation an MySQL DB
 type MySQL struct {
-	Database 	string
-	User		string
-	Password	string
-	Host		string
-	Port		string
-	Protocol	string
+	Database string
+	User     string
+	Password string
+	Host     string
+	Port     string
+	Protocol string
 
 	//ConnectionTimeout int // Seconds
 }
 
-func (s *MySQL) Open(logger logrus.FieldLogger) (storage.Storage, error){
+func (s *MySQL) Open(logger logrus.FieldLogger) (storage.Storage, error) {
 	conn, err := s.open(logger)
-	if (err != nil ){
+	if err != nil {
 		return nil, err
 	}
 	return conn, nil
@@ -193,7 +193,7 @@ func (s *MySQL) open(logger logrus.FieldLogger) (*conn, error) {
 	set("tx_isolation", "SERIALIZABLE")
 	//set("connect_timeout", strconv.Itoa(100))
 
-	if s.Port == ""{
+	if s.Port == "" {
 		s.Port = ":3306"
 	}
 
@@ -230,10 +230,10 @@ func (s *MySQL) open(logger logrus.FieldLogger) (*conn, error) {
 			fmt.Printf("MySQL Error: %s Code: %s", sqlErr.Message, sqlErr.Number)
 			return false
 		}
-		if( sqlErr.Number == 1213) {
+		if sqlErr.Number == 1213 {
 			return false
 		}
-		if (sqlErr.Number == 40001){
+		if sqlErr.Number == 40001 {
 			return false
 		}
 		return sqlErr.Number == mysqlErrorUniqueViolation

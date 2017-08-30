@@ -3,13 +3,13 @@ package main
 import (
 	"testing"
 
+	"fmt"
 	"github.com/coreos/dex/connector/mock"
 	"github.com/coreos/dex/connector/oidc"
 	"github.com/coreos/dex/storage"
 	"github.com/coreos/dex/storage/sql"
 	"github.com/ghodss/yaml"
 	"github.com/kylelemons/godebug/pretty"
-	"fmt"
 )
 
 var _ = yaml.YAMLToJSON
