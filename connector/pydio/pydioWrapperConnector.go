@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/coreos/dex/connector/pydio-ldap"
-	"github.com/coreos/dex/connector/pydio-sql"
 	"github.com/coreos/dex/connector/pydio-userapi"
 	"sort"
 )
@@ -106,6 +105,9 @@ func (p *pydioWrapperConnector) getConnectorList(logger logrus.FieldLogger) (con
 	// end sort
 	for _, connConfig := range p.Config.Connectors {
 		connConnector, er := createConnector(logger, connConfig.Type, connConfig)
+		if er != nil {
+			logger.Errorf(er.Error())
+		}
 		connConnectorFull := ConnectorList{
 			Type: connConfig.Type,
 			Name: connConfig.Name,
@@ -115,9 +117,6 @@ func (p *pydioWrapperConnector) getConnectorList(logger logrus.FieldLogger) (con
 				connector.PasswordConnector
 				connector.RefreshConnector
 			}),
-		}
-		if er != nil {
-			logger.Errorf(er.Error())
 		}
 		connectorList = append(connectorList, connConnectorFull)
 	}
@@ -154,7 +153,6 @@ type PydioConnectorConfig interface {
 // depending on the connector type.
 var PydioConnectorsConfig = map[string]func() PydioConnectorConfig{
 	"pydio-ldap": func() PydioConnectorConfig { return new(pydio_ldap.Config) },
-	"pydio-sql":  func() PydioConnectorConfig { return new(pydio_sql.Config) },
 	"pydio-api":  func() PydioConnectorConfig { return new(pydio_api.Config) },
 }
 
