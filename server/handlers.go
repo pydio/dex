@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"gopkg.in/square/go-jose.v2"
+	jose "gopkg.in/square/go-jose.v2"
 
 	"github.com/coreos/dex/connector"
 	"github.com/coreos/dex/server/internal"
@@ -292,7 +292,6 @@ func (s *Server) handleConnectorLogin(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 
 		identity, ok, err := passwordConnector.Login(r.Context(), scopes, username, password)
-
 		if err != nil {
 			s.logger.Errorf("Failed to login user: %v", err)
 			s.renderError(w, http.StatusInternalServerError, "Login error.")
@@ -915,7 +914,7 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 				return true
 			}
 		}
-		return false
+		return true
 	}()
 
 	var refreshToken string
@@ -1019,8 +1018,6 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 	}
 	s.writeAccessToken(w, idToken, accessToken, refreshToken, expiry)
 }
-
-// ==================================
 
 // handle a refresh token request https://tools.ietf.org/html/rfc6749#section-6
 func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, client storage.Client) {

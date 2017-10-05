@@ -2,15 +2,16 @@ package pydio_api
 
 import (
 	"context"
+
 	"github.com/coreos/dex/connector"
-	"github.com/sirupsen/logrus"
-	"github.com/pydio/services/common/proto/idm"
-	"github.com/pydio/services/common"
-	"github.com/micro/go-plugins/client/grpc"
-	"github.com/micro/go-micro/client"
-	commonproto "github.com/pydio/services/common/proto"
-	"github.com/micro/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
+	"github.com/micro/go-micro/client"
+	"github.com/micro/go-plugins/client/grpc"
+	"github.com/micro/protobuf/ptypes"
+	"github.com/pydio/services/common"
+	"github.com/pydio/services/common/proto/idm"
+	"github.com/pydio/services/common/service/proto"
+	"github.com/sirupsen/logrus"
 )
 
 type Config struct {
@@ -39,7 +40,7 @@ func (c *Config) openConnector(logger logrus.FieldLogger) (*pydioAPIConnector, e
 type pydioAPIConnector struct {
 	Config
 	logger            logrus.FieldLogger
-	client 		      client.Client
+	client            client.Client
 	UserServiceClient idm.UserServiceClient
 	RoleServiceClient idm.RoleServiceClient
 }
@@ -51,8 +52,8 @@ var (
 
 func (p *pydioAPIConnector) loadUserInfo(ctx context.Context, identity *connector.Identity) error {
 
-	if p.RoleServiceClient == nil{
-		p.RoleServiceClient = idm.NewRoleServiceClient(common.SERVICE_ROLE, p.client)
+	if p.RoleServiceClient == nil {
+		p.RoleServiceClient = idm.NewRoleServiceClient(common.SERVICE_GRPC_NAMESPACE_ + common.SERVICE_ROLE, p.client)
 	}
 	//p.RoleServiceClient.SearchRole(ctx, idm.SearchRoleRequest{
 	//	Query:
@@ -63,12 +64,14 @@ func (p *pydioAPIConnector) loadUserInfo(ctx context.Context, identity *connecto
 	var roles []string
 
 	if stream, err := p.RoleServiceClient.SearchRole(context.Background(), &idm.SearchRoleRequest{
-		Query: &commonproto.Query{
+		Query: &service.Query{
 			SubQueries: []*any.Any{query},
 		},
 	}); err != nil {
 		return err
 	} else {
+
+		defer stream.Close()
 
 		for {
 			response, err := stream.Recv()
@@ -87,10 +90,10 @@ func (p *pydioAPIConnector) loadUserInfo(ctx context.Context, identity *connecto
 func (p *pydioAPIConnector) Login(ctx context.Context, s connector.Scopes, username, password string) (identity connector.Identity, validPassword bool, err error) {
 
 	if p.UserServiceClient == nil {
-		p.UserServiceClient = idm.NewUserServiceClient(common.SERVICE_USER, p.client)
+		p.UserServiceClient = idm.NewUserServiceClient(common.SERVICE_GRPC_NAMESPACE_ + common.SERVICE_USER, p.client)
 	}
 
-	resp, err := p.UserServiceClient.BindUser(ctx, &idm.BindUserRequest{UserName:username, Password:password})
+	resp, err := p.UserServiceClient.BindUser(ctx, &idm.BindUserRequest{UserName: username, Password: password})
 	if err != nil {
 		return connector.Identity{}, false, err
 	}

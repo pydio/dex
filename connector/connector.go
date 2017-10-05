@@ -17,6 +17,7 @@ type Connector interface{}
 type Scopes struct {
 	// The client has requested a refresh token from the server.
 	OfflineAccess bool
+
 	// The client has requested group information about the end user.
 	Groups  bool
 	OpenID  bool

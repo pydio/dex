@@ -4,10 +4,11 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"errors"
-	jose "gopkg.in/square/go-jose.v2"
 	"io"
 	"strings"
 	"time"
+
+	jose "gopkg.in/square/go-jose.v2"
 )
 
 var (

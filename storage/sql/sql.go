@@ -3,14 +3,13 @@ package sql
 
 import (
 	"database/sql"
+	"fmt"
 	"regexp"
 	"time"
 
-	"github.com/cockroachdb/cockroach-go/crdb"
 	"github.com/sirupsen/logrus"
 
 	// import third party drivers
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -100,7 +99,7 @@ var (
 			{matchLiteral("timestamptz"), "datetime(6)"},
 			{matchLiteral("bytea"), "blob"},
 			{matchLiteral("text"), "varchar(555)"},
-			{matchLiteral("keys"), "tb_keys"},
+			{matchLiteral("keys"), "dex_keys"},
 			//{regexp.MustCompile(`\b(keys)\b`), "`$1`"},
 			// Change default timestamp to fit datetime.
 			{regexp.MustCompile(`0001-01-01 00:00:00 UTC`), "1000-01-01 00:00:00"},
@@ -144,9 +143,9 @@ var (
 	}
 
 	// Not tested.
-	flavorCockroach = flavor{
-		executeTx: crdb.ExecuteTx,
-	}
+	// flavorCockroach = flavor{
+	// 	executeTx: crdb.ExecuteTx,
+	// }
 )
 
 func (f flavor) translate(query string) string {
@@ -189,7 +188,6 @@ func (c *conn) Close() error {
 
 func (c *conn) Exec(query string, args ...interface{}) (sql.Result, error) {
 	query = c.flavor.translate(query)
-	//fmt.Println(query)
 	return c.db.Exec(query, c.translateArgs(args)...)
 }
 

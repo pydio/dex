@@ -189,9 +189,9 @@ connectors:
       config:
        SqlConnection:
         Host: 127.0.0.1
-        DBName: py8dev
-        UserName: pydio
-        Password: pydiopsss
+        DBName: pydio
+        UserName: root
+        Password:
        UserTableName: ajxp_users
        UserIDColumn: login
        PasswordColumn: password
