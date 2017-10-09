@@ -101,7 +101,7 @@ func (p *pydioAPIConnector) Login(ctx context.Context, s connector.Scopes, usern
 	identity = connector.Identity{
 		UserID:        username,
 		Username:      resp.User.Login,
-		Email:         resp.User.ID + "@pydio.com",
+		Email:         resp.User.Uuid + "@pydio.com",
 		EmailVerified: true,
 		DisplayName:   "",
 		GroupPath:     resp.User.GroupPath,
