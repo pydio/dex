@@ -59,7 +59,8 @@ func (p *pydioAPIConnector) loadUserInfo(ctx context.Context, identity *connecto
 	//	Query:
 	//})
 	query, _ := ptypes.MarshalAny(&idm.RoleSingleQuery{
-		Name: []string{"AJXP_USR_/" + identity.UserID},
+		Uuid: []string{identity.UserID},
+		IsUserRole:true,
 	})
 	var roles []string
 
@@ -78,7 +79,7 @@ func (p *pydioAPIConnector) loadUserInfo(ctx context.Context, identity *connecto
 			if err != nil {
 				break
 			}
-			roles = append(roles, response.GetRole().GetName())
+			roles = append(roles, response.GetRole().GetUuid())
 		}
 	}
 
