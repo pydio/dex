@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/coreos/dex/connector"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-plugins/client/grpc"
-	"github.com/micro/protobuf/ptypes"
 	"github.com/pydio/services/common"
 	"github.com/pydio/services/common/proto/idm"
 	"github.com/pydio/services/common/service/proto"
@@ -58,11 +58,15 @@ func (p *pydioAPIConnector) loadUserInfo(ctx context.Context, identity *connecto
 	//p.RoleServiceClient.SearchRole(ctx, idm.SearchRoleRequest{
 	//	Query:
 	//})
-	query, _ := ptypes.MarshalAny(&idm.RoleSingleQuery{
+	roleQuery := &idm.RoleSingleQuery{
 		Uuid: []string{identity.UserID},
 		IsUserRole:true,
-	})
+	}
+	query, e := ptypes.MarshalAny(roleQuery)
+	query.TypeUrl = "type.googleapis.com/idm.RoleSingleQuery"
 	var roles []string
+
+	p.logger.Debug(roleQuery, query, e)
 
 	if stream, err := p.RoleServiceClient.SearchRole(context.Background(), &idm.SearchRoleRequest{
 		Query: &service.Query{
@@ -112,8 +116,12 @@ func (p *pydioAPIConnector) Login(ctx context.Context, s connector.Scopes, usern
 		ConnectorData: nil,
 	}
 
+	for _, r := range resp.User.Roles {
+		identity.Roles = append(identity.Roles, r.Uuid)
+	}
+
 	// Load identity data from DB
-	p.loadUserInfo(ctx, &identity)
+	// p.loadUserInfo(ctx, &identity)
 
 	return identity, true, nil
 }
@@ -122,8 +130,8 @@ func (p *pydioAPIConnector) Refresh(ctx context.Context, s connector.Scopes, ide
 
 	p.logger.Printf("Refresh request for User ID: %s", ident.UserID)
 	ident.UserID = ident.UserID + "c"
-	// Refresh identity data from DB
-	p.loadUserInfo(ctx, &ident)
+	// TODO: Refresh identity data from DB ?
+	// p.loadUserInfo(ctx, &ident)
 
 	return ident, nil
 }
