@@ -174,7 +174,9 @@ func newServer(ctx context.Context, c Config, rotationStrategy rotationStrategy)
 
 	static, theme, tmpls, err := loadWebConfig(web)
 	if err != nil {
-		return nil, fmt.Errorf("server: failed to load web static: %v", err)
+		//return nil, fmt.Errorf("server: failed to load web static: %v", err)
+		fmt.Println("Warning, could not find static directory for web resoures " + web.dir + " - Only API and GRPC accesses will be available")
+		tmpls = &templates{}
 	}
 
 	now := c.Now
@@ -243,8 +245,12 @@ func newServer(ctx context.Context, c Config, rotationStrategy rotationStrategy)
 	handleFunc("/callback", s.handleConnectorCallback)
 	handleFunc("/approval", s.handleApproval)
 	handleFunc("/healthz", s.handleHealth)
-	handlePrefix("/static", static)
-	handlePrefix("/theme", theme)
+	if static != nil{
+		handlePrefix("/static", static)
+	}
+	if theme != nil {
+		handlePrefix("/theme", theme)
+	}
 	s.mux = r
 
 	s.startKeyRotation(ctx, rotationStrategy, now)
