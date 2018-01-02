@@ -154,6 +154,7 @@ type Claims struct {
 	DisplayName string
 	Roles       []string
 	GroupPath   string
+	Profile     string
 }
 
 // AuthRequest represents a OAuth2 client authorization request. It holds the state

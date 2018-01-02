@@ -406,6 +406,7 @@ func (s *Server) finalizeLogin(identity connector.Identity, authReq storage.Auth
 		DisplayName: identity.DisplayName,
 		Roles:       identity.Roles,
 		GroupPath:   identity.GroupPath,
+		Profile:     identity.Profile,
 	}
 
 	updater := func(a storage.AuthRequest) (storage.AuthRequest, error) {
@@ -870,6 +871,7 @@ func (s *Server) handleCredentialGrant(w http.ResponseWriter, r *http.Request, c
 		claims.DisplayName = identity.DisplayName
 		claims.Roles = identity.Roles
 		claims.GroupPath = identity.GroupPath
+		claims.Profile = identity.Profile
 	}
 
 	accessToken := storage.NewID()
@@ -1108,6 +1110,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
 		Roles:         refresh.Claims.Roles,
 		AuthSource:    refresh.Claims.AuthSource,
 		GroupPath:     refresh.Claims.GroupPath,
+		Profile:       refresh.Claims.Profile,
 	}
 
 	// Can the connector refresh the identity? If so, attempt to refresh the data
@@ -1135,6 +1138,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
 		DisplayName:   ident.DisplayName,
 		Roles:         ident.Roles,
 		GroupPath:     ident.GroupPath,
+		Profile:       ident.Profile,
 	}
 
 	accessToken := storage.NewID()
@@ -1173,6 +1177,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request, clie
 		old.Claims.DisplayName = ident.DisplayName
 		old.Claims.Roles = ident.Roles
 		old.Claims.GroupPath = ident.GroupPath
+		old.Claims.Profile = ident.Profile
 		old.ConnectorData = ident.ConnectorData
 		old.LastUsed = lastUsed
 		return old, nil

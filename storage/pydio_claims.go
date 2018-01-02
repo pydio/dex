@@ -9,6 +9,7 @@ type PydioClaims struct {
 	DisplayName string
 	Roles       []string
 	GroupPath   string
+	Profile     string
 }
 
 func (pc *PydioClaims) JsonMarshal() string {
@@ -32,6 +33,7 @@ func (pc *PydioClaims) GetFromClaims(claims *Claims) error {
 	pc.DisplayName = claims.DisplayName
 	pc.Roles = claims.Roles
 	pc.GroupPath = claims.GroupPath
+	pc.Profile = claims.Profile
 	return nil
 }
 
@@ -40,5 +42,6 @@ func (pc *PydioClaims) SetToClaims(claims *Claims) error {
 	claims.DisplayName = pc.DisplayName
 	claims.Roles = pc.Roles
 	claims.GroupPath = pc.GroupPath
+	claims.Profile = pc.Profile
 	return nil
 }

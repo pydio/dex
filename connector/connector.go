@@ -41,6 +41,7 @@ type Identity struct {
 	//Uuid 			string
 	AuthSource  string
 	DisplayName string
+	Profile 	string
 	Roles       []string
 	GroupPath   string
 
@@ -130,6 +131,8 @@ func SetAttribute(i *Identity, attName string, attVal []string) (err error) {
 		i.DisplayName = attVal[0]
 	case "GroupPath":
 		i.GroupPath = attVal[0]
+	case "Profile":
+		i.Profile = attVal[0]
 
 	case "Roles":
 		if len(attVal) > 0 {

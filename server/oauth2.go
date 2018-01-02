@@ -273,6 +273,7 @@ type idTokenClaims struct {
 	DisplayName string `json:"displayname,omitempty"`
 	Roles       string `json:"roles,omitempty"`
 	GroupPath   string `json:"grouppath,omitempty"`
+	Profile     string `json:"profile,omitempty"`
 }
 
 func (s *Server) newIDToken(clientID string, claims storage.Claims, scopes []string, nonce, accessToken, connID string) (idToken string, expiry time.Time, err error) {
@@ -339,6 +340,7 @@ func (s *Server) newIDToken(clientID string, claims storage.Claims, scopes []str
 			tok.DisplayName = claims.DisplayName
 			tok.AuthSource = claims.AuthSource
 			tok.GroupPath = claims.GroupPath
+			tok.Profile = claims.Profile
 			tok.Roles = strings.Join(claims.Roles, ",")
 		default:
 			peerID, ok := parseCrossClientScope(scope)
