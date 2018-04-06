@@ -11,7 +11,6 @@ import (
 	"github.com/lib/pq"
 	sqlite3 "github.com/mattn/go-sqlite3"
 	"github.com/sirupsen/logrus"
-	"strings"
 )
 
 const (
@@ -154,14 +153,7 @@ func (p *Postgres) open(logger logrus.FieldLogger) (*conn, error) {
 
 // MySQL options for creation an MySQL DB
 type MySQL struct {
-	Database string
-	User     string
-	Password string
-	Host     string
-	Port     string
-	Protocol string
-
-	//ConnectionTimeout int // Seconds
+	DSN string
 }
 
 func (s *MySQL) Open(logger logrus.FieldLogger) (storage.Storage, error) {
@@ -172,55 +164,21 @@ func (s *MySQL) Open(logger logrus.FieldLogger) (storage.Storage, error) {
 	return conn, nil
 }
 
-func (s *MySQL) open(logger logrus.FieldLogger) (*conn, error) {
-	// dns: [username[:password]@][protocol[(address)]]/dbname
-	//var config := &mysql.Config{s.User,s.Password,"tcp",s.Host,s.Database	}
+func (s *MySQL) open(logger logrus.FieldLogger) (*conn, error) {		
+	dexDSN, err := mysql.ParseDSN(s.DSN)
+	if err != nil {
 
-	v := url.Values{}
-	set := func(key, val string) {
-		if val != "" {
-			v.Set(key, val)
-		}
 	}
-	//set("connect_timeout", strconv.Itoa(s.ConnectionTimeout))
-	set("parseTime", "true")
-	set("multiStatements", "true")
-	set("collation", "utf8_general_ci")
-	set("charset", "utf8")
-	set("autocommit", "false")
+	dexDSN.ParseTime = true
+	dexDSN.MultiStatements = true
+	//dexDSN.Collation = "utf8_general_ci"
 
-	// Set isolation transaction
-	set("tx_isolation", "SERIALIZABLE")
-	//set("connect_timeout", strconv.Itoa(100))
+	params := make(map[string]string)
+	params["autocommit"] = "false"
+	params["tx_isolation"] = "SERIALIZABLE"
+	dexDSN.Params = params
 
-	if s.Port == "" {
-		s.Port = ":3306"
-	}
-
-	if s.Protocol == "" {
-		s.Protocol = "tcp"
-	}
-
-	u := url.URL{
-		Scheme:   s.Protocol,
-		Host:     s.Protocol + "(" + s.Host + s.Port + ")",
-		Path:     "/" + s.Database,
-		RawQuery: v.Encode(),
-	}
-
-	if s.User != "" {
-		if s.Password != "" {
-			u.User = url.UserPassword(s.User, s.Password)
-		} else {
-			u.User = url.User(s.User)
-		}
-	}
-	//dnstest := s.User + ":" + s.Password + "@tcp(" + s.Host + ":3306)/" + s.Database + "?parseTime=true&multiStatements=true&collation=utf8_general_ci&charset=utf8&autocommit=true&tx_isolation=SERIALIZABLE"
-
-	replaceStr := s.Protocol + "://"
-	dns := strings.TrimPrefix(u.String(), replaceStr)
-
-	db, err := sql.Open("mysql", dns)
+	db, err := sql.Open("mysql", dexDSN.FormatDSN())
 	if err != nil {
 		return nil, err
 	}
