@@ -1,7 +1,7 @@
 // Package microsoft provides authentication strategies using Microsoft.
 package microsoft
 
-import (
+import (	
 	"bytes"
 	"context"
 	"encoding/json"
@@ -14,9 +14,9 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/dexidp/dex/connector"
-	groups_pkg "github.com/dexidp/dex/pkg/groups"
-	"github.com/dexidp/dex/pkg/log"
+	"github.com/coreos/dex/connector"
+	groups_pkg "github.com/coreos/dex/pkg/groups"
+	"github.com/sirupsen/logrus"
 )
 
 // GroupNameFormat represents the format of the group identifier
@@ -52,7 +52,7 @@ type Config struct {
 }
 
 // Open returns a strategy for logging in through Microsoft.
-func (c *Config) Open(id string, logger log.Logger) (connector.Connector, error) {
+func (c *Config) Open(logger logrus.FieldLogger) (connector.Connector, error) {
 	m := microsoftConnector{
 		redirectURI:          c.RedirectURI,
 		clientID:             c.ClientID,
@@ -102,7 +102,7 @@ type microsoftConnector struct {
 	groupNameFormat      GroupNameFormat
 	groups               []string
 	useGroupsAsWhitelist bool
-	logger               log.Logger
+	logger               logrus.FieldLogger
 }
 
 func (c *microsoftConnector) isOrgTenant() bool {
